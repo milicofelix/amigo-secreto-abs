@@ -12,6 +12,10 @@ class ParticipantController extends Controller
 {
     public function create(Group $group)
     {
+        if ($group->draws()->active()->exists()) {
+            return redirect()->route('groups.edit', $group);
+        }
+
         return view('amigo-secreto.participants.create', compact('group'));
     }
 
@@ -22,17 +26,23 @@ class ParticipantController extends Controller
         // 🔐 Gera a chave secreta automaticamente
         $validated['secret_key'] = strtoupper(\Str::random(6));
 
-        if ($request->hasFile('photo')) {
-            $validated['photo'] = $request->file('photo')->store('participants', 'local');
-        }
+        $group->modifyRoster(function (Group $locked) use ($request, $validated) {
+            if ($request->hasFile('photo')) {
+                $validated['photo'] = $request->file('photo')->store('participants', 'local');
+            }
 
-        $group->participants()->create($validated);
+            $locked->participants()->create($validated);
+        });
 
         return redirect()->route('groups.edit', $group)->with('success', 'Participante adicionado!');
     }
 
     public function edit(Group $group, Participant $participant)
     {
+        if ($group->draws()->active()->exists()) {
+            return redirect()->route('groups.edit', $group);
+        }
+
         return view('amigo-secreto.participants.edit', compact('group', 'participant'));
     }
 
@@ -40,11 +50,13 @@ class ParticipantController extends Controller
     {
         $validated = $this->validateParticipant($request);
 
-        if ($request->hasFile('photo')) {
-            $validated['photo'] = $request->file('photo')->store('participants', 'local');
-        }
+        $group->modifyRoster(function (Group $locked) use ($request, $validated, $participant) {
+            if ($request->hasFile('photo')) {
+                $validated['photo'] = $request->file('photo')->store('participants', 'local');
+            }
 
-        $participant->update($validated);
+            $locked->participants()->findOrFail($participant->id)->update($validated);
+        });
 
         return redirect()->route('groups.edit', $group)->with('success', 'Participante atualizado!');
     }
@@ -66,7 +78,7 @@ class ParticipantController extends Controller
 
     public function destroy(Group $group, Participant $participant)
     {
-        $participant->delete();
+        $group->modifyRoster(fn (Group $locked) => $locked->participants()->findOrFail($participant->id)->delete());
         return redirect()->route('groups.edit', $group)->with('success', 'Participante removido!');
     }
 

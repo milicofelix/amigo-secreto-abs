@@ -24,7 +24,7 @@ class ParticipantImportController extends Controller
         $participants = $source?->participants()->orderBy('name')->get() ?? collect();
         $alreadyImported = $group->participants()->whereNotNull('imported_from_participant_id')
             ->pluck('imported_from_participant_id')->all();
-        $hasCompletedDraw = $group->draws()->where('status', 'completed')->exists();
+        $hasCompletedDraw = $group->draws()->active()->exists();
 
         return view('amigo-secreto.participants.import', compact(
             'group', 'year', 'sources', 'source', 'participants', 'alreadyImported', 'hasCompletedDraw'
@@ -45,7 +45,7 @@ class ParticipantImportController extends Controller
             $destination = Group::lockForUpdate()->findOrFail($group->id);
             Gate::authorize('manage', $destination);
 
-            if ($destination->draws()->where('status', 'completed')->exists()) {
+            if ($destination->draws()->active()->exists()) {
                 throw ValidationException::withMessages(['source' => 'Este grupo já realizou o sorteio.']);
             }
 

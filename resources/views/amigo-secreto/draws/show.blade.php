@@ -53,7 +53,16 @@
                 <span class="text-lg md:text-xl text-gray-600">— {{ $group->name }} —</span>
             </h1>
 
+            @if(session('warning'))
+                <p class="mb-4 rounded bg-yellow-100 p-3 text-yellow-900" role="status">{{ session('warning') }}</p>
+            @endif
+
             @if($draw)
+                @if ($revealAt = $group->collectiveRevealAt())
+                    <p class="text-center text-gray-700">Revelação coletiva em {{ $revealAt->format('d/m/Y H:i') }} (horário de Brasília).</p>
+                @else
+                    <p class="text-center text-gray-700">A revelação coletiva ainda precisa ser agendada no grupo.</p>
+                @endif
 
                {{-- Lista responsiva com Flexbox --}}
                 <div class="space-y-4 mt-4">
@@ -112,7 +121,7 @@
                 {{-- Informação do sorteio --}}
                 <div class="mt-8 text-center">
                     <div class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
-                        ✅ Sorteio realizado em {{ $draw->drawn_at->format('d/m/Y H:i') }}
+                        ✅ Sorteio realizado em {{ ($draw->drawn_at ?? $draw->created_at)?->format('d/m/Y H:i') }}
                     </div>
                 </div>
 
@@ -145,80 +154,4 @@
 
 
     </div>
-
-    <!-- Popup de Aviso -->
-    <div id="alertMimo" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-sm mx-auto animate-popup border-2 border-red-500">
-            
-            <div class="text-5xl mb-4 text-yellow-500 animate-pulse">⚠️</div>
-
-            <h2 class="text-xl font-extrabold text-red-600 mb-3">
-                Atenção!
-            </h2>
-
-            <p class="text-gray-800 font-medium leading-relaxed mb-4">
-                O participante que <strong>não comprar o mimo</strong> terá que pagar 
-                <strong class="text-red-600">o dobro do mínimo</strong>,
-                ou seja:
-            </p>
-
-            <p class="text-3xl font-extrabold text-green-600 mb-4 animate-bounce">
-                💸 R$ 100,00!
-            </p>
-
-            <p class="text-sm text-gray-700 font-semibold mt-2 mb-6 bg-yellow-100 border border-yellow-400 px-3 py-2 rounded-lg inline-block animate-pulse">
-                📅 Dia do evento: <strong>31/12/2025</strong> — 🏠 Casa da Gabriela
-            </p>
-
-            <button onclick="fecharAviso()"
-                    class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold transition shadow-md">
-                Entendi 👍
-            </button>
-        </div>
-    </div>
-    <audio id="popupSound" src="https://assets.mixkit.co/sfx/download/mixkit-positive-notification-951.wav" preload="auto"></audio>
-
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-
-    <script>
-        window.onload = function() {
-            const popupKey = 'popupMimoShownAt_{{ $group->id }}';
-            const today = new Date().toISOString().slice(0, 10);
-            const lastShown = localStorage.getItem(popupKey);
-
-            if (lastShown !== today) {
-                document.getElementById('alertMimo').classList.remove('hidden');
-                localStorage.setItem(popupKey, today);
-
-                // 🔊 Toca som suave de aviso
-                const sound = document.getElementById('popupSound');
-                if (sound) {
-                    sound.currentTime = 0;
-                    sound.play().catch(() => {}); // evita erro em navegação que bloqueia autoplay
-                }
-            }
-        };
-
-       function fecharAviso() {
-            const popup = document.getElementById('alertMimo');
-            popup.classList.add('hidden');
-
-            // 🔊 Som suave ao confirmar
-            const sound = document.getElementById('popupSound');
-            if (sound) {
-                sound.currentTime = 0;
-                sound.play().catch(() => {});
-            }
-
-            // 🎉 Explosão de confete
-            confetti({
-                particleCount: 180,
-                spread: 90,
-                startVelocity: 50,
-                origin: { y: 0.6 }
-            });
-        }
-    </script>
-
-
 @endsection

@@ -18,7 +18,7 @@ class SuperAdminGroupsController extends Controller
             'creator' => ['nullable', 'string', 'regex:/\A(?:unassigned|[1-9][0-9]{0,17})\z/'],
             'draw' => ['nullable', Rule::in(['completed', 'pending'])],
         ]);
-        $completed = fn ($query) => $query->where('status', 'completed');
+        $completed = fn ($query) => $query->active();
         $query = Group::select('id', 'user_id', 'name', 'event_date', 'created_at')
             ->with('user:id,name')
             ->withCount('participants')

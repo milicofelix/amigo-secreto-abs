@@ -10,26 +10,27 @@ use Illuminate\Validation\Rule;
 
 class RestrictionController extends Controller
 {
-     public function store(Request $request, Group $group)
+    public function store(Request $request, Group $group)
     {
-        $member = Rule::exists('participants', 'id')->where('group_id', $group->id);
-        $validated = $request->validate([
-            'participant_id' => ['required', 'integer', $member],
-            'cannot_draw_id' => ['required', 'integer', 'different:participant_id', $member],
-        ]);
+        $group->modifyRoster(function (Group $locked) use ($request) {
+            $member = Rule::exists('participants', 'id')->where('group_id', $locked->id);
+            $validated = $request->validate([
+                'participant_id' => ['required', 'integer', $member],
+                'cannot_draw_id' => ['required', 'integer', 'different:participant_id', $member],
+            ]);
 
-        Restriction::create([
-            'group_id'          => $group->id,
-            'participant_id'    => $validated['participant_id'],
-            'cannot_draw_id'    => $validated['cannot_draw_id'],
-        ]);
+            $locked->restrictions()->create([
+                'participant_id'    => $validated['participant_id'],
+                'cannot_draw_id'    => $validated['cannot_draw_id'],
+            ]);
+        });
 
         return redirect()->route('groups.edit', $group)->with('success', 'Restrição adicionada!');
     }
 
     public function destroy(Group $group, Restriction $restriction)
     {
-        $restriction->delete();
+        $group->modifyRoster(fn (Group $locked) => $locked->restrictions()->findOrFail($restriction->id)->delete());
         return redirect()->route('groups.edit', $group)->with('success', 'Restrição removida!');
     }
 }

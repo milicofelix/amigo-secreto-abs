@@ -84,14 +84,20 @@ Commit sugerido — `git c "feat: unifica a revelação com convites privados"`
 
 ## Fase 4 Regras do sorteio e histórico
 
-- [ ] Validar se existe uma combinação possível com as restrições atuais antes de confirmar o sorteio. Explicar quando a configuração impede a formação dos pares.
-- [ ] Impedir alterações de participantes e restrições depois de confirmar. Garantir no banco um destinatário por participante e um participante por destinatário em cada sorteio.
-- [ ] Definir a data e hora da revelação coletiva. Enviar notificações após a confirmação no banco e registrar os eventos de sorteio, cancelamento autorizado e notificações.
+- [x] Validar se existe uma combinação possível com as restrições atuais antes de confirmar o sorteio. Explicar quando a configuração impede a formação dos pares.
+- [x] Impedir alterações de participantes e restrições depois de confirmar. Garantir no banco um destinatário por participante e um participante por destinatário em cada sorteio.
+- [x] Definir a data e hora da revelação coletiva. Enviar notificações após a confirmação no banco e registrar os eventos de sorteio, cancelamento autorizado e notificações.
+
+Em **Grupos → Gerenciar → Revelação coletiva**, agende a data e hora no horário de Brasília. Sem horário explícito, vale a meia-noite da data do evento. Se o grupo também estiver sem data do evento, a revelação coletiva fica bloqueada até o agendamento. O resultado individual fica disponível pelo convite após confirmar o sorteio.
+
+O criador pode cancelar um sorteio ativo antes da revelação coletiva, com motivo obrigatório. O cancelamento retira o resultado do portal, reinicia os estados de presente e libera a lista para ajustes e um novo sorteio. O histórico fica no painel do grupo e registra confirmações, cancelamentos e o processamento dos avisos. Grupos com histórico ficam protegidos contra exclusão.
 
 ### Teste manual no navegador
 
-1. Monte um grupo fictício com restrições impossíveis. O painel deve rejeitar a configuração e manter o grupo sem resultado.
-2. Ajuste as restrições, realize o sorteio e confira o bloqueio da lista. A revelação coletiva deve ficar disponível na hora configurada.
+1. Em um grupo fictício com três participantes, configure Ana para não tirar Bia e Bia para não tirar Ana. As duas só poderão tirar a terceira pessoa. Clique em **Sortear Amigo Secreto** e confirme que o painel informa o conflito.
+2. Remova uma das restrições, agende a revelação coletiva para alguns minutos à frente e realize o sorteio. Confira o bloqueio da lista, a confirmação no histórico e a consulta individual pelo convite.
+3. Abra **Ver Resultado do Sorteio** antes do horário e após o horário. Antes, a tela mostra o andamento. Depois, ela abre os pares do sorteio ativo.
+4. Em outro grupo fictício, com a revelação ainda no futuro, cancele com um motivo e confira o histórico, o bloqueio do resultado anterior no portal e a possibilidade de ajustar a lista e sortear novamente.
 
 Commit sugerido — `git c "feat: valida restrições e protege o histórico do sorteio"`
 

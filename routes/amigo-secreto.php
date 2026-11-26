@@ -35,6 +35,8 @@ Route::middleware(['auth', 'can:access-organizer', 'cache.headers:private;no_sto
         Route::get('participants/{participant}/photo', [ParticipantController::class, 'photo'])->name('participants.photo');
         Route::post('restrictions', [RestrictionController::class, 'store'])->name('restrictions.store');
         Route::delete('restrictions/{restriction}', [RestrictionController::class, 'destroy'])->name('restrictions.destroy');
+        Route::patch('draw/revelacao', [GroupController::class, 'scheduleReveal'])->name('draw.schedule');
+        Route::post('draw/cancelar', [AsDrawController::class, 'cancel'])->name('draw.cancel');
         Route::post('draw', [AsDrawController::class, 'store'])->name('draw.store');
         Route::get('draw/result', [AsDrawController::class, 'show'])->name('draw.show');
         Route::get('start-draw', [DashboardController::class, 'startDraw'])->name('dashboard.start-draw');

@@ -24,7 +24,7 @@
     });
     if (showInviteFromLink() || !panel) return;
 
-    const { participant, csrf, inviteScope, statusUrl, pushUrl, pushKey } = panel.dataset;
+    const { participant, drawId, csrf, inviteScope, statusUrl, pushUrl, pushKey } = panel.dataset;
     const request = (url, method, data) => fetch(url, {
         method,
         credentials: 'same-origin',
@@ -36,7 +36,7 @@
         },
         body: JSON.stringify(data),
     });
-    const postStatus = (field) => request(statusUrl, 'POST', { participant_id: participant, field, value: 1 });
+    const postStatus = (field) => request(statusUrl, 'POST', { participant_id: participant, draw_id: drawId, field, value: 1 });
     const status = document.getElementById('pwa-sync-status');
 
     const shared = panel.querySelector('[data-gift-status]');
@@ -105,10 +105,10 @@
                     status.textContent = 'Sincronizado.';
                     return;
                 }
-                if (pending.inviteScope !== inviteScope) {
+                if (pending.inviteScope !== inviteScope || pending.drawId !== drawId) {
                     await clear();
                     gift.disabled = false;
-                    status.textContent = 'O acesso mudou. Marque o presente novamente se ainda for necessário.';
+                    status.textContent = 'O acesso ou sorteio mudou. Marque o presente novamente se ainda for necessário.';
                     return;
                 }
                 if (Date.now() - pending.createdAt > retention) {
@@ -158,7 +158,7 @@
         gift.addEventListener('click', async () => {
             gift.disabled = true;
             try {
-                await put({ createdAt: Date.now(), inviteScope });
+                await put({ createdAt: Date.now(), inviteScope, drawId });
                 await sync();
             } catch {
                 gift.disabled = false;

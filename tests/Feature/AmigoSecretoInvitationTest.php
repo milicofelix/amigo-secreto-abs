@@ -85,7 +85,7 @@ class AmigoSecretoInvitationTest extends TestCase
         $this->from($portal)->post(route('pwa.participant.verify'), ['code' => $replacement])->assertSessionHasErrors('code');
     }
 
-    public function test_draw_only_queues_generic_email_for_subscribed_recipients(): void
+    public function test_draw_only_sends_generic_email_for_subscribed_recipients(): void
     {
         Mail::fake();
         $this->signInOrganizer();
@@ -95,8 +95,9 @@ class AmigoSecretoInvitationTest extends TestCase
         $other->forceFill(['draw_email_enabled' => false])->save();
 
         $this->post(route('draw.store', $group))->assertRedirect();
-        Mail::assertQueuedCount(1);
-        Mail::assertQueued(SecretFriendNotification::class, function ($mail) {
+        Mail::assertSentCount(1);
+        $this->assertDatabaseHas('draw_events', ['draw_id' => $group->draws()->sole()->id, 'type' => 'email_sent']);
+        Mail::assertSent(SecretFriendNotification::class, function ($mail) {
             $mail->assertSeeInHtml(route('pwa.participant'));
             $mail->assertDontSeeInHtml('Nome secreto');
             $mail->assertDontSeeInHtml('Grupo reservado');

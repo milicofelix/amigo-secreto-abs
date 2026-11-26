@@ -15,16 +15,20 @@ class ParticipantPwaController extends Controller
     public function show(Request $request)
     {
         $participant = $request->attributes->get('pwa.participant');
-        $assignment = $participant?->givenAssignments()
-            ->whereHas('draw', fn ($query) => $query->where('status', 'completed')->where('group_id', $participant->group_id))
-            ->with(['receiver' => fn ($query) => $query->select('id', 'name', 'wishlist')->where('group_id', $participant->group_id)])
-            ->latest('id')->first();
+        $assignment = $participant?->group?->withDrawLock(function () use ($participant) {
+            $assignment = $participant->givenAssignments()
+                ->whereHas('draw', fn ($query) => $query->active()->where('group_id', $participant->group_id))
+                ->with(['receiver' => fn ($query) => $query->select('id', 'name', 'wishlist')->where('group_id', $participant->group_id)])
+                ->latest('id')->first();
 
-        if ($assignment?->receiver && !$participant->first_revealed_at) {
-            $participant->newQuery()->withActiveInvite()->whereKey($participant->id)
-                ->where('pwa_access_hash', $participant->pwa_access_hash)->whereNull('first_revealed_at')
-                ->update(['first_revealed_at' => now()]);
-        }
+            if ($assignment?->receiver && !$participant->first_revealed_at) {
+                $participant->newQuery()->withActiveInvite()->whereKey($participant->id)
+                    ->where('pwa_access_hash', $participant->pwa_access_hash)->whereNull('first_revealed_at')
+                    ->update(['first_revealed_at' => now()]);
+            }
+
+            return $assignment;
+        });
 
         return view('amigo-secreto.pwa.participant', compact('participant', 'assignment'));
     }

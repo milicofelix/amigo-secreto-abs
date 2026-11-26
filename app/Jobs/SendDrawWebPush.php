@@ -35,8 +35,8 @@ class SendDrawWebPush implements ShouldBeUnique, ShouldQueue
 
     public function handle(): void
     {
-        $draw = AsDraw::find($this->drawId);
-        if (!self::enabled() || $draw?->status !== 'completed') {
+        $draw = AsDraw::active()->find($this->drawId);
+        if (!self::enabled() || !$draw) {
             return;
         }
 
@@ -47,6 +47,11 @@ class SendDrawWebPush implements ShouldBeUnique, ShouldQueue
         $retry = false;
 
         foreach ($subscriptions->lazyById() as $record) {
+            if (!AsDraw::active()->whereKey($draw->id)->exists()) {
+                return;
+            }
+
+            $type = 'push_failed';
             try {
                 $report = $push->sendOneNotification(
                     Subscription::create($record->subscription + ['contentEncoding' => 'aes128gcm']),
@@ -54,16 +59,20 @@ class SendDrawWebPush implements ShouldBeUnique, ShouldQueue
                 );
                 if ($report->isSubscriptionExpired()) {
                     $record->delete();
+                    $type = 'push_expired';
                 } elseif ($report->isSuccess()) {
                     $record->update(['last_notified_draw_id' => $draw->id]);
+                    $type = 'push_sent';
                 } else {
                     Log::warning('Falha de entrega Web Push.', ['draw_id' => $draw->id]);
                     $status = $report->getResponse()?->getStatusCode();
                     $retry = $retry || $status === null || $status === 429 || $status >= 500;
                 }
             } catch (\Throwable) {
+                $retry = true;
                 Log::warning('Erro de entrega Web Push.', ['draw_id' => $draw->id]);
             }
+            $draw->events()->create(['type' => $type]);
         }
 
         if ($retry) {

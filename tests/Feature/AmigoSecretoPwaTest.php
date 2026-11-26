@@ -25,7 +25,7 @@ class AmigoSecretoPwaTest extends TestCase
         [$group, $participant, $other] = $this->group();
         $draw = $group->draws()->create(['drawn_at' => now(), 'status' => 'completed']);
         $draw->assignments()->create(['giver_id' => $participant->id, 'receiver_id' => $other->id]);
-        $status = ['participant_id' => $participant->id, 'field' => 'bought_gift', 'value' => 1];
+        $status = ['participant_id' => $participant->id, 'draw_id' => $draw->id, 'field' => 'bought_gift', 'value' => 1];
 
         $this->get(route('reveal.result', $participant))->assertRedirect(route('pwa.participant'));
         $this->get(route('pwa.participant'))->assertOk()->assertDontSee($other->name);
@@ -105,6 +105,7 @@ class AmigoSecretoPwaTest extends TestCase
 
         $this->assertDatabaseCount('participant_push_subscriptions', 1);
         $this->assertSame($draw->id, ParticipantPushSubscription::first()->last_notified_draw_id);
+        $this->assertSame(['push_sent', 'push_expired'], $draw->events()->orderBy('id')->pluck('type')->all());
     }
 
     private function group(): array

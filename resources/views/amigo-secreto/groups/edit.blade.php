@@ -1,7 +1,6 @@
 @extends('layouts.amigo-secreto')
 
 @section('content')
-@php($hasCompletedDraw = $group->draws()->where('status', 'completed')->exists())
 <div class="max-w-6xl mx-auto mt-8 px-4">
 
     <h1 class="text-2xl md:text-3xl font-bold mb-4 text-black">
@@ -14,6 +13,11 @@
     @if(session('error'))
         <div class="bg-red-100 text-red-800 p-3 rounded mb-4">{{ session('error') }}</div>
     @endif
+    @foreach (['roster', 'participant_id', 'cannot_draw_id', 'collective_reveal_at', 'reason'] as $field)
+        @error($field)
+            <div class="bg-red-100 text-red-800 p-3 rounded mb-4" role="alert">{{ $message }}</div>
+        @enderror
+    @endforeach
     @if(session('participant_import_warning'))
         <div role="status" class="bg-yellow-100 text-yellow-900 p-3 rounded mb-4">
             {{ session('participant_import_warning') }}
@@ -33,6 +37,9 @@
             @endif
         </div>
 
+        @if ($hasCompletedDraw)
+            <p class="mb-4 text-sm text-gray-700">A lista fica bloqueada enquanto o sorteio estiver ativo. Os convites continuam disponíveis.</p>
+        @else
         <form method="POST"
               action="{{ route('participants.store', $group) }}"
               enctype="multipart/form-data"
@@ -72,7 +79,7 @@
                 @enderror
             @endforeach
         </form>
-
+        @endif
 
         {{-- Tabela responsiva --}}
        <div class="overflow-x-auto rounded">
@@ -97,6 +104,7 @@
                             <div class="flex flex-wrap justify-center gap-2">
                                 <a href="{{ route('participants.qr', [$group, $p], absolute: false) }}"
                                    class="rounded bg-indigo-600 px-2 py-1 text-white">Convite</a>
+                                @unless ($hasCompletedDraw)
                                 <a href="{{ route('participants.edit', [$group, $p]) }}"
                                 class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded">✏️</a>
 
@@ -108,6 +116,7 @@
                                         🗑️
                                     </button>
                                 </form>
+                                @endunless
                             </div>
                         </td>
                     </tr>
@@ -122,6 +131,7 @@
     <div class="bg-white p-4 shadow rounded mb-6">
         <h2 class="text-xl font-semibold mb-3">🚫 Restrições</h2>
 
+        @unless ($hasCompletedDraw)
         <form method="POST"
               action="{{ route('restrictions.store', $group) }}"
               class="flex flex-col md:flex-row gap-2 mb-4">
@@ -148,12 +158,14 @@
                 + Adicionar
             </button>
         </form>
+        @endunless
 
         <ul class="list-disc pl-4 md:pl-6">
             @foreach($group->restrictions as $r)
                 <li class="flex flex-col md:flex-row justify-between border-b py-1 gap-2">
                     <span>{{ $r->participant->name }} ❌ {{ $r->cannotDraw->name }}</span>
 
+                    @unless ($hasCompletedDraw)
                     <form action="{{ route('restrictions.destroy', [$group, $r]) }}"
                           method="POST">
                         @csrf @method('DELETE')
@@ -161,11 +173,35 @@
                             Remover
                         </button>
                     </form>
+                    @endunless
                 </li>
             @endforeach
         </ul>
     </div>
 
+
+    <section class="bg-white p-4 shadow rounded mb-6">
+        <h2 class="text-xl font-semibold mb-2">Revelação coletiva</h2>
+        @php($revealAt = $group->collectiveRevealAt())
+        @if ($revealAt)
+            <p class="mb-3">Agendada para {{ $revealAt->format('d/m/Y H:i') }} (horário de Brasília).</p>
+        @else
+            <p class="mb-3">Defina quando o organizador poderá ver todos os pares.</p>
+        @endif
+        @if (!$hasCompletedDraw || !$revealAt)
+            <form method="POST" action="{{ route('draw.schedule', $group) }}" class="flex flex-wrap items-end gap-3">
+                @csrf
+                @method('PATCH')
+                <label class="block" for="collective-reveal-at">
+                    Data e hora (Brasília)
+                    <input id="collective-reveal-at" type="datetime-local" name="collective_reveal_at" required
+                           value="{{ old('collective_reveal_at', $revealAt?->format('Y-m-d\TH:i')) }}"
+                           class="block border rounded p-2">
+                </label>
+                <button class="rounded bg-indigo-600 px-4 py-2 text-white">Agendar revelação</button>
+            </form>
+        @endif
+    </section>
 
     {{-- Sorteio --}}
     <div class="bg-white p-4 shadow rounded text-center">
@@ -186,7 +222,22 @@
                 </button>
             </form>
         @endif
+        @if ($hasCompletedDraw && !$group->canRevealCollectively())
+            <details class="mt-5 border-t pt-4 text-left">
+                <summary class="cursor-pointer font-semibold text-red-700">Cancelar sorteio</summary>
+                <p class="my-2 text-sm text-gray-700">O resultado individual deixará de aparecer e os registros de presente deste sorteio serão reiniciados.</p>
+                <form method="POST" action="{{ route('draw.cancel', $group) }}"
+                      onsubmit="return confirm('Cancelar o sorteio atual?')">
+                    @csrf
+                    <label class="block" for="draw-cancel-reason">Motivo do cancelamento</label>
+                    <textarea id="draw-cancel-reason" name="reason" maxlength="500" required rows="2"
+                              class="block w-full border rounded p-2 mb-3">{{ old('reason') }}</textarea>
+                    <button class="rounded bg-red-700 px-4 py-2 text-white">Confirmar cancelamento</button>
+                </form>
+            </details>
+        @endif
     </div>
 
+    @include('amigo-secreto.draws.history')
 </div>
 @endsection

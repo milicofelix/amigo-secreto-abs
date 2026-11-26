@@ -103,27 +103,24 @@ class DashboardController extends Controller
 
     public function revealedFriends(Group $group)
     {
-         // 🔒 TRAVA DEFINITIVA
-        if (!$group->eventIsOver()) {
-            return redirect()
-                ->route('amigo.dashboard', $group->id)
-                ->with('warning', 'Os amigos secretos ainda não podem ser revelados.');
-        }
-        
-        $results = \DB::table('assignments as a')
-            ->join('participants as g', 'g.id', '=', 'a.giver_id')
-            ->join('participants as r', 'r.id', '=', 'a.receiver_id')
-            ->where('g.group_id', $group->id)
-            ->orderBy('g.name')
-            ->select([
-                'g.name as quem_tirou',
-                'r.name as quem_foi_tirado',
-            ])
-            ->get();
+        return $group->withDrawLock(function (Group $locked) {
+            if (!$locked->canRevealCollectively()) {
+                return redirect()
+                    ->route('draw.show', $locked)
+                    ->with('warning', 'A revelação coletiva ainda não está disponível.');
+            }
 
-        return view('amigo-secreto.dashboard.revealed-friends', [
-            'group'   => Group::findOrFail($group->id),
-            'results' => $results
-        ]);
+            $drawId = $locked->draws()->active()->latest('id')->value('id');
+            $results = \DB::table('assignments as a')
+                ->join('participants as g', 'g.id', '=', 'a.giver_id')
+                ->join('participants as r', 'r.id', '=', 'a.receiver_id')
+                ->where('a.draw_id', $drawId)
+                ->where('g.group_id', $locked->id)->where('r.group_id', $locked->id)
+                ->orderBy('g.name')
+                ->select(['g.name as quem_tirou', 'r.name as quem_foi_tirado'])
+                ->get();
+
+            return view('amigo-secreto.dashboard.revealed-friends', ['group' => $locked, 'results' => $results]);
+        });
     }
 }
