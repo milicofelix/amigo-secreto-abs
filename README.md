@@ -15,9 +15,12 @@ O projeto sobe somente PHP-FPM e Nginx. O MySQL continua no container externo
 docker compose up -d --build
 docker compose exec app composer install
 docker compose exec app php artisan migrate
+docker compose exec app php artisan storage:link
 ```
 
 A aplicação fica disponível em <http://localhost:8085>.
+O document root do Nginx e a saída do Vite usam `public_html/`. O disco Laravel
+`public` continua gravando em `storage/app/public`, servido pela URL `/storage`.
 
 Se o ambiente ainda não tiver a rede compartilhada, crie-a antes de subir os
 serviços com `docker network create shared_net`. As credenciais de exemplo em

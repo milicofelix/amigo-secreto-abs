@@ -30,7 +30,7 @@ Commit sugerido — `git c "feat: adiciona manifesto e ícones do PWA"`
 2. Visite uma página de grupo. Marque **Offline** no painel do service worker e recarregue normalmente. A tela **Você está sem conexão** deve aparecer com o logo e o botão **Tentar novamente**.
 3. Desmarque **Offline** e clique em **Tentar novamente**. A mesma página do grupo deve carregar.
 4. Em **Application → Cache Storage → amigo-secreto-offline-v1**, confira que constam apenas `/offline.html` e `/images/pwa-icon-192.png`.
-5. Quando houver alterações nesses arquivos, incremente a versão do cache em `public/service-worker.js`. Após carregar a nova versão, confira no DevTools que o cache anterior do Amigo Secreto foi removido.
+5. Quando houver alterações nesses arquivos, incremente a versão do cache em `public_html/service-worker.js`. Após carregar a nova versão, confira no DevTools que o cache anterior do Amigo Secreto foi removido.
 
 Commit sugerido — `git c "feat: adiciona tela offline e cache de arquivos públicos"`
 
