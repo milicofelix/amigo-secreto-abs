@@ -2,11 +2,19 @@
 
 A primeira versão deve poder ser instalada e, ao abrir pelo ícone, levar à seleção de grupos do ano atual. Sem conexão, o app apresenta uma tela offline. Consultar participantes, revelar resultados, criar grupos e realizar sorteios exige conexão.
 
+Toda entrega deve incluir um roteiro de teste manual no navegador, com os passos e o resultado esperado. No computador, use `http://localhost:8085` com o Docker rodando. Para testar em um celular, use a URL HTTPS de um ambiente de teste acessível pelo aparelho.
+
 ## Fase 1 — Identidade e abertura
 
-- [ ] Criar o manifesto com nome, cores, ícones e URL de entrada.
-- [ ] Integrar o manifesto ao layout do Amigo Secreto.
-- [ ] Verificar que a URL de entrada abre a seleção de grupos do ano atual.
+- [x] Criar o manifesto com nome, cores, ícones e URL de entrada.
+- [x] Integrar o manifesto ao layout do Amigo Secreto.
+- [x] Verificar que a URL de entrada abre a seleção de grupos do ano atual.
+
+### Teste manual no navegador
+
+1. Abra `http://localhost:8085/`. A página deve redirecionar para `/dashboard/select-group?year=<ano-atual>`, com o ano atual selecionado.
+2. No Chrome ou Edge, abra o DevTools e acesse **Application → Manifest**. Confira o nome **Amigo Secreto ABS**, as cores e os ícones de 192 e 512 px.
+3. Abra `http://localhost:8085/images/pwa-icon-180.png` em outra aba. O ícone da tela inicial do iPhone deve carregar.
 
 Commit sugerido — `git c "feat: adiciona manifesto e ícones do PWA"`
 
@@ -16,6 +24,12 @@ Commit sugerido — `git c "feat: adiciona manifesto e ícones do PWA"`
 - [ ] Limitar o cache aos arquivos públicos necessários para essa tela, como ícones e estilos. Páginas de grupos, participantes, resultados e links de revelação devem ser buscados pela rede.
 - [ ] Verificar o comportamento ao perder e recuperar a conexão e ao atualizar a versão do cache.
 
+### Teste manual no navegador
+
+1. Abra o app com conexão. No Chrome ou Edge, abra **DevTools → Application → Service Workers** e confira que o worker está ativo.
+2. Visite uma página de grupo com conexão. Marque **Offline** no painel do service worker e recarregue. A tela offline deve aparecer.
+3. Desmarque **Offline** e recarregue. A página do grupo deve carregar novamente. Em **Application → Cache Storage**, confira que só os arquivos públicos previstos para a tela offline foram armazenados.
+
 Commit sugerido — `git c "feat: adiciona tela offline e cache de arquivos públicos"`
 
 ## Fase 3 — Instalação
@@ -23,6 +37,12 @@ Commit sugerido — `git c "feat: adiciona tela offline e cache de arquivos púb
 - [ ] Exibir a opção **Instalar app** quando o navegador oferecer essa ação ao site.
 - [ ] Incluir uma orientação curta para adicionar o app à tela inicial no iPhone.
 - [ ] Conferir que o app abre pelo ícone depois de instalado.
+
+### Teste manual no navegador
+
+1. Em um navegador compatível, com o app ainda por instalar, use **Instalar app** e aceite a instalação.
+2. No iPhone, abra o site no Safari e siga a orientação exibida pelo app para adicioná-lo à tela inicial.
+3. Abra pelo ícone em cada dispositivo. A seleção de grupos deve abrir com o ano atual selecionado.
 
 Commit sugerido — `git c "feat: adiciona opção de instalação do PWA"`
 
@@ -32,6 +52,12 @@ Commit sugerido — `git c "feat: adiciona opção de instalação do PWA"`
 - [ ] Validar o retorno da conexão e a atualização do cache.
 - [ ] Confirmar que o filtro de ano continua mostrando os grupos históricos sob demanda e que o modal aparece uma única vez após um sorteio bem-sucedido.
 - [ ] Conferir que o cache do PWA não contém dados de participantes, resultados nem links de revelação.
+
+### Teste manual no navegador
+
+1. No Android e no iPhone, instale e abra pelo ícone. Desconecte o aparelho e abra novamente para conferir a tela offline. Restabeleça a conexão e confira que a seleção de grupos volta a carregar.
+2. Escolha um ano anterior no filtro e confira a listagem. Em um grupo de teste, faça um sorteio e confirme que o modal aparece após o sucesso. Recarregue o resultado e confira que ele não se repete.
+3. No Chrome ou Edge, após atualizar o service worker, confira a versão ativa e verifique em **Cache Storage** que a versão anterior foi removida e que páginas de participantes, resultados e revelações estão ausentes.
 
 Commit sugerido — `git c "test: valida instalação e fluxos principais do PWA"`
 
