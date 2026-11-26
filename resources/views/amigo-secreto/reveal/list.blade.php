@@ -1,13 +1,6 @@
 @extends('layouts.amigo-secreto')
 
 @section('content')
-@php
-    function safeDecrypt($value) {
-        try { return $value ? Crypt::decryptString($value) : null; }
-        catch (\Exception $e) { return $value; }
-    }
-@endphp
-
 <style>
     .secret-card {
         background: linear-gradient(135deg, #2d6cdf, #4c9bff);
@@ -74,7 +67,7 @@
     @else
         @foreach($revealed as $item)
             <div class="reveal-item">
-                <strong>{{ safeDecrypt($item->participant->name) }}</strong> já sabe quem tirou no Amigo Secreto! 🎁
+                <strong>{{ $item->participant->name }}</strong> já sabe quem tirou no Amigo Secreto! 🎁
                 <div class="reveal-date">
                     📅 Revelado em: <strong>{{ $item->revealed_at->format('d/m/Y H:i') }}</strong>
                 </div>
@@ -84,8 +77,8 @@
 
     {{-- Voltar --}}
     <div class="mt-3">
-        <a href="{{ url()->previous() }}" class="btn btn-primary secret-back-btn">
-            ⬅ Voltar
+        <a href="{{ route('amigo.dashboard', $group, absolute: false) }}" class="btn btn-primary secret-back-btn">
+            ⬅ Voltar ao dashboard
         </a>
     </div>
 

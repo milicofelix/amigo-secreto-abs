@@ -69,6 +69,6 @@
         @endif
     @endif
 
-    <a href="{{ route('groups.edit', $group) }}" class="mt-5 inline-block font-semibold text-indigo-700 underline">Voltar ao grupo</a>
+    <a href="{{ route('groups.edit', $group, absolute: false) }}" class="mt-5 inline-block font-semibold text-indigo-700 underline">Voltar ao grupo</a>
 </section>
 @endsection

@@ -26,9 +26,9 @@
         💾 Salvar como imagem
     </button>
 
-    <a href="{{ url()->previous() }}"
+    <a href="{{ route('draw.show', $group, absolute: false) }}"
        class="block mt-3 text-indigo-500 hover:text-indigo-700 font-semibold text-sm">
-        ← Voltar
+        ← Voltar ao sorteio
     </a>
 </div>
 

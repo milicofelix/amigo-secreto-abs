@@ -60,7 +60,7 @@
 </script>
 
 <div class="text-center mt-6">
-    <a href="{{ url('/dashboard/' . $group->id) }}"
+    <a href="{{ route('amigo.dashboard', $group, absolute: false) }}"
         class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700">
         ⬅️ Voltar ao dashboard
     </a>

@@ -48,7 +48,7 @@
 
     <button onclick="copyPix()" class="btn btn-success mt-3 w-100">📋 Copiar Código PIX</button>
 
-    <a href="{{ url()->previous() }}" class="btn btn-secondary mt-3 w-100">Voltar</a>
+    <a href="{{ route('rifas.show', ['rifa' => $nome->rifa_id], absolute: false) }}" class="btn btn-secondary mt-3 w-100">Voltar à rifa</a>
 
 </div>
 

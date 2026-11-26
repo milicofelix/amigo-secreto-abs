@@ -35,9 +35,9 @@
         @endif
 
         {{-- Link voltar --}}
-        <a href="{{ route('groups.index') }}"
+        <a href="{{ route('groups.index', ['year' => $participant->group->eventYear()], absolute: false) }}"
            class="inline-block text-indigo-600 hover:text-indigo-700 font-semibold mt-2 text-base md:text-lg fade-in">
-            ← Voltar ao início
+            ← Voltar aos grupos
         </a>
 
     </div>

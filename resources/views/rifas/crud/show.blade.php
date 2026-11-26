@@ -9,7 +9,7 @@
 </a>
 
 <div class="mb-3">
-    <a href="{{ route('rifas.index') }}" class="btn btn-secondary btn-sm">⬅ Voltar</a>
+    <a href="{{ route('rifas.index', absolute: false) }}" class="btn btn-secondary btn-sm">⬅ Voltar</a>
 
     @if(!$rifa->nomes()->exists())
         <a href="{{ route('rifas.gerarNomes.form', $rifa->id) }}"
@@ -47,7 +47,7 @@
             @endif
         </p>
 
-        <a href="{{ route('rifas.index') }}" class="btn btn-secondary mt-2">Voltar</a>
+        <a href="{{ route('rifas.index', absolute: false) }}" class="btn btn-secondary mt-2">Voltar</a>
         <a href="{{ route('rifas.edit', $rifa->id) }}" class="btn btn-primary mt-2">Editar</a>
 
         <a href="{{ route('rifas.gerarNomes', $rifa->id) }}" class="btn btn-warning mt-2">

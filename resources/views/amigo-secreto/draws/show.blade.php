@@ -135,7 +135,7 @@
                 @if ($draw)
                     <a href="{{ route('pwa.participant') }}" class="mr-3 font-semibold text-indigo-700 underline">Atualizar meu presente</a>
                 @endif
-                <a href="{{ route('groups.index', ['year' => $group->eventYear()]) }}"
+                <a href="{{ route('groups.index', ['year' => $group->eventYear()], absolute: false) }}"
                 class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition w-full md:w-auto">
                     ← Voltar aos Grupos
                 </a>

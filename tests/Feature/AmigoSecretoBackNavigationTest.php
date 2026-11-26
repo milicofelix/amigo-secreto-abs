@@ -1,0 +1,58 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\AmigoSecreto\Group;
+use App\Models\Rifas\Rifa;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class AmigoSecretoBackNavigationTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_back_links_always_point_to_their_parent_page(): void
+    {
+        $group = Group::create(['name' => 'Grupo atual', 'event_date' => now()->addWeek()->toDateString()]);
+        $olderGroup = Group::create(['name' => 'Grupo anterior', 'event_date' => now()->subYear()->toDateString()]);
+        $participant = $group->participants()->create(['name' => 'Participante', 'secret_key' => 'CODIGOTESTE']);
+        $participant->reveal()->create(['password_hash' => 'teste', 'revealed_at' => now()]);
+        $this->withSession(['legacy_reveal.participant_id' => $participant->id]);
+
+        $dashboard = route('amigo.dashboard', $group, absolute: false);
+        $groups = route('groups.index', ['year' => $group->eventYear()], absolute: false);
+        $draw = route('draw.show', $group, absolute: false);
+        $script = url('/service-worker.js');
+
+        $pages = [
+            [route('reveal.list', $group), $dashboard],
+            [route('participants.qr', ['group' => $group, 'id' => $participant->id]), $draw],
+            [route('dashboard.start-draw', $group), $dashboard],
+            [route('reveal.result', $participant), $groups],
+            [$draw, $groups],
+            [route('participants.import', $group), route('groups.edit', $group, absolute: false)],
+            [route('dashboard.revealed-friends', $olderGroup), route('amigo.dashboard', $olderGroup, absolute: false)],
+        ];
+
+        foreach ($pages as [$page, $destination]) {
+            $this->withHeader('Referer', $script)->get($page)
+                ->assertOk()
+                ->assertSee('href="'.$destination.'"', false)
+                ->assertDontSee('href="'.$script.'"', false);
+            $this->get($destination)->assertOk();
+        }
+    }
+
+    public function test_pix_back_link_returns_to_its_raffle(): void
+    {
+        $rifa = Rifa::create(['titulo' => 'Rifa de teste', 'valor' => 10]);
+        $nome = $rifa->nomes()->create(['nome' => 'Número de teste']);
+        $destination = route('rifas.show', $rifa, absolute: false);
+        $script = url('/service-worker.js');
+
+        $this->withHeader('Referer', $script)->get(route('rifas.pix', $nome))->assertOk()
+            ->assertSee('href="'.$destination.'"', false)
+            ->assertDontSee('href="'.$script.'"', false);
+        $this->get($destination)->assertOk();
+    }
+}
