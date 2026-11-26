@@ -63,10 +63,3 @@
         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
     @enderror
 </div>
-
-{{-- Botão --}}
-<div class="mt-6">
-    <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded w-full md:w-auto">
-        {{ $submitLabel ?? 'Salvar' }}
-    </button>
-</div>

@@ -13,7 +13,13 @@
           enctype="multipart/form-data"
           class="bg-white shadow rounded p-5">
         @csrf
-        @include('amigo-secreto.participants._form', ['submitLabel' => 'Adicionar'])
+        @include('amigo-secreto.participants._form')
+
+        <div class="mt-6">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded w-full md:w-auto">
+                Adicionar
+            </button>
+        </div>
     </form>
 
 </div>

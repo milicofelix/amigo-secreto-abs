@@ -18,7 +18,7 @@
         @method('PUT')
 
         {{-- Formulário compartilhado --}}
-        @include('amigo-secreto.participants._form', ['submitLabel' => 'Atualizar'])
+        @include('amigo-secreto.participants._form')
 
         {{-- Botão de submit --}}
         <div class="mt-6 text-right">
