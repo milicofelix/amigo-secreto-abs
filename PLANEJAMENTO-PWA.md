@@ -51,17 +51,21 @@ Commit sugerido — `git c "feat: adiciona opção de instalação do PWA"`
 ## Fase 4 — Validação
 
 - [ ] Testar instalação, abertura pelo ícone e modo offline em Android e iPhone.
-- [ ] Validar o retorno da conexão e a atualização do cache.
-- [ ] Confirmar que o filtro de ano continua mostrando os grupos históricos sob demanda e que o modal aparece uma única vez após um sorteio bem-sucedido.
-- [ ] Conferir que o cache do PWA não contém dados de participantes, resultados nem links de revelação.
+- [x] Validar o retorno da conexão na mesma página e a atualização do cache no Chrome.
+- [x] Confirmar que o filtro de ano continua mostrando os grupos históricos sob demanda e que o modal aparece uma única vez após um sorteio bem-sucedido.
+- [x] Conferir que o cache do PWA contém apenas a tela offline e o ícone.
+
+O Chrome identificou o PWA como elegível para instalação e exibiu **Instalar app**. Em um perfil temporário, foi possível abrir a listagem de 2025, perder a conexão e carregar o mesmo grupo ao clicar em **Tentar novamente** após voltar à rede. O teste da atualização usou um servidor local isolado e confirmou que a versão v2 removeu o cache v1 e preservou o cache de outro app.
+
+Os testes do Laravel passaram com 29 verificações, incluindo o filtro por ano e a confirmação única após o sorteio. A instalação e a abertura pelo ícone em Android e iPhone aguardam teste em dispositivos.
 
 ### Teste manual no navegador
 
-1. No Android e no iPhone, instale e abra pelo ícone. Desconecte o aparelho e abra novamente para conferir a tela offline. Restabeleça a conexão e confira que a seleção de grupos volta a carregar.
+1. No Android e no iPhone, abra a URL HTTPS de teste e instale seguindo o roteiro da Fase 3. Abra pelo ícone com conexão uma vez. Depois desligue a conexão, abra novamente e confira a tela offline. Restabeleça a conexão e toque em **Tentar novamente** para voltar à seleção de grupos.
 2. Escolha um ano anterior no filtro e confira a listagem. Em um grupo de teste, faça um sorteio e confirme que o modal aparece após o sucesso. Recarregue o resultado e confira que ele não se repete.
-3. No Chrome ou Edge, após atualizar o service worker, confira a versão ativa e verifique em **Cache Storage** que a versão anterior foi removida e que páginas de participantes, resultados e revelações estão ausentes.
+3. No Chrome ou Edge, espere o novo service worker ficar ativo após uma atualização. Em **DevTools → Application → Cache Storage**, confira que o cache novo contém apenas `/offline.html` e `/images/pwa-icon-192.png` e que a versão anterior foi removida.
 
-Commit sugerido — `git c "test: valida instalação e fluxos principais do PWA"`
+Commit sugerido — `git c "docs: registra validação do PWA no Chrome"`
 
 ## Versões futuras
 
