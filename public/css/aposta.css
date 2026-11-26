@@ -1,0 +1,326 @@
+:root {
+  --azul-caixa: #004a8f;
+  --verde-caixa: #008c8a;
+  --verde-bola: #2ecc71;
+  --cinza-claro: #f5f7fa;
+  --cinza-bola: #c5d1db;
+  --texto-escuro: #333;
+}
+
+body {
+  background-color: var(--cinza-claro);
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  margin: 0;
+  color: var(--texto-escuro);
+}
+
+/* HEADER */
+header {
+  background-color: var(--azul-caixa);
+  color: white;
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header .logo {
+  font-weight: bold;
+  font-size: 1.4em;
+  letter-spacing: 1px;
+}
+
+header nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+header nav a:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* MAIN CONTENT */
+main {
+  max-width: 1000px;
+  margin: 40px auto;
+  background-color: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* TITULO */
+.titulo {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: var(--azul-caixa);
+  margin-bottom: 10px;
+}
+
+.descricao {
+  color: #555;
+  margin-bottom: 25px;
+  font-size: 1em;
+  line-height: 1.5;
+}
+
+/* SELECT DE QUANTIDADE */
+.controle-aposta {
+  margin-bottom: 25px;
+}
+
+.controle-aposta label {
+  font-weight: bold;
+  color: var(--azul-caixa);
+  margin-right: 10px;
+  font-size: 1.1em;
+}
+
+.controle-aposta select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+/* NÚMEROS */
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+  gap: 10px;
+  justify-items: center;
+  margin: 20px 0 40px 0;
+}
+
+.numero {
+  background-color: var(--cinza-bola);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.2em;
+  width: 55px;
+  height: 55px;
+  line-height: 55px;
+  border-radius: 50%;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.numero:hover {
+  background-color: var(--verde-caixa);
+}
+
+.numero.selecionado {
+  background-color: var(--verde-bola);
+  transform: scale(1.05);
+}
+
+/* SIDEBAR / TOTAL */
+.sidebar {
+  background-color: #f9fafb;
+  border: 1px solid #e2e6ea;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.sidebar h3 {
+  color: var(--azul-caixa);
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+
+.sidebar p {
+  color: #666;
+  font-size: 0.95em;
+  margin-bottom: 15px;
+}
+
+.total {
+  font-weight: bold;
+  color: var(--verde-caixa);
+  font-size: 1.4em;
+  text-align: right;
+}
+
+.btn-pagar {
+  display: inline-block;
+  background-color: var(--azul-caixa);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.btn-pagar:hover {
+  background-color: #003b70;
+}
+
+/* BOTÕES DE AÇÃO */
+.botoes-acao {
+  margin-top: 30px;
+  text-align: right;
+}
+
+.botoes-acao button {
+  background-color: var(--azul-caixa);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.botoes-acao button:hover {
+  background-color: #003b70;
+  transform: scale(1.05);
+}
+
+.campo-selecionados {
+  margin: 20px 0;
+  background-color: #f9fafb;
+  border: 1px solid #dfe3e6;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.campo-selecionados strong {
+  color: var(--azul-caixa);
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.1em;
+}
+
+#selecionados {
+  font-weight: bold;
+  color: var(--verde-caixa);
+  font-size: 1.1em;
+  word-spacing: 6px;
+}
+
+/* BOTÃO SALVAR */
+#btnSalvar {
+  background-color: var(--verde-caixa);
+}
+
+#btnSalvar:hover {
+  background-color: #00706f;
+}
+
+/* LISTA DE APOSTAS */
+.aposta-item {
+  background: #fff;
+  border: 1px solid #e0e6ea;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+.aposta-item strong {
+  color: var(--azul-caixa);
+}
+
+.acoes-apostas {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0 16px 0;
+}
+
+.btn-aposta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .2s, transform .02s;
+  line-height: 1;
+}
+
+.btn-aposta:hover { filter: brightness(0.96); }
+.btn-aposta:active { transform: translateY(1px); }
+
+.btn-limpar-apostas {
+  background: #d1d5db;
+  color: #1f2937;
+}
+
+.btn-efetivar-apostas {
+  background: var(--verde-caixa);
+  color: #fff;
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 768px) {
+  main {
+    margin: 20px;
+    padding: 25px;
+  }
+
+  .numeros {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .botoes-acao {
+    text-align: center;
+  }
+
+  .botoes-acao button {
+    width: 45%;
+    margin: 5px 0;
+  }
+}
+
+/* ⚡️ MENSAGENS VISUAIS */
+.mensagem {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #2ecc71;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateY(-15px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+.mensagem.visivel {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mensagem.erro {
+  background: #e74c3c;
+}
+
+.mensagem.info {
+  background: #3498db;
+}
+
+
+
+
+

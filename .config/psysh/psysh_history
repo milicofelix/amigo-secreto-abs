@@ -1,0 +1,1 @@
+app(App\Services\WhatsAppService::class)->sendMessage('5511951410140', '🔔 Teste automático com detecção dinâmica do número!');

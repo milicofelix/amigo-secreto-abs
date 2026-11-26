@@ -1,0 +1,447 @@
+/* -------------------------------------
+   GERAL
+------------------------------------- */
+:root {
+    --azul-caixa: #004a8f;
+    --verde-caixa: #008c8a;
+    --verde-bola: #2ecc71;
+    --cinza-claro: #072543;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    background-color: var(--cinza-claro);
+    color: #333;
+    line-height: 1.6;
+}
+
+/* -------------------------------------
+   HEADER
+------------------------------------- */
+header {
+    background-color: var(--azul-caixa);
+    color: rgb(60, 54, 54);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    gap: 10px;
+}
+
+header nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+header nav a {
+    color: rgb(46, 43, 43);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+header .btn-conta {
+    background: white;
+    color: var(--azul-caixa);
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+/* -------------------------------------
+   BANNER
+------------------------------------- */
+.banner {
+    background: linear-gradient(90deg, var(--azul-caixa) 40%, var(--verde-caixa) 100%);
+    color: rgb(85, 74, 74);
+    padding: 50px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+}
+
+.banner .textos {
+    flex: 1 1 300px;
+}
+
+.banner h1 {
+    font-size: 2em;
+}
+
+.banner p {
+    font-size: 1.1em;
+}
+
+.banner img {
+    width: 200px;
+    max-width: 100%;
+    border-radius: 10px;
+}
+
+/* -------------------------------------
+   SUBMENU
+------------------------------------- */
+.submenu {
+    background-color: rgb(87, 75, 75);
+    border-bottom: 1px solid #ddd;
+    padding: 15px 20px;
+    text-align: center;
+}
+
+.submenu a {
+    display: inline-block;
+    margin: 5px 10px;
+    color: var(--azul-caixa);
+    font-weight: 500;
+}
+
+/* -------------------------------------
+   RESULTADO
+------------------------------------- */
+.resultado {
+    background-color: rgb(85, 75, 75);
+    margin: 30px auto;
+    padding: 30px 20px;
+    border-radius: 8px;
+    max-width: 900px;
+}
+
+.busca-concurso {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* -------------------------------------
+   NÚMEROS
+------------------------------------- */
+.bolas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.bola {
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+}
+
+/* -------------------------------------
+   COMO JOGAR / PROBABILIDADE
+------------------------------------- */
+.passos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.passo {
+    flex: 1 1 250px;
+}
+
+/* -------------------------------------
+   FOOTER
+------------------------------------- */
+footer {
+    text-align: center;
+    padding: 20px;
+    background: var(--azul-caixa);
+    color: rgb(64, 57, 57);
+    margin-top: 40px;
+}
+
+/* -------------------------------------
+   RESPONSIVIDADE EXTRA
+------------------------------------- */
+@media (max-width: 640px) {
+    .banner h1 {
+        font-size: 1.7em;
+    }
+
+    header {
+        text-align: center;
+    }
+
+    header nav {
+        justify-content: center;
+    }
+}
+
+/* ======================================================================
+   TABELAS COMPACTAS — OTIMIZADAS PARA IPHONE 12 PRO (390px)
+   Basta adicionar a classe: compact-table
+   ====================================================================== */
+
+@media (max-width: 420px) {
+
+    /* Reduz fonte e padding das células */
+    .compact-table th,
+    .compact-table td {
+        padding: 6px 4px !important;
+        font-size: 0.80rem !important;
+        white-space: nowrap; /* impede quebra feia */
+    }
+
+    /* Cabeçalho um pouco menor */
+    .compact-table th {
+        font-size: 0.75rem !important;
+        text-align: left;
+    }
+
+    /* Botões dentro da tabela ficam menores */
+    .compact-table .action-btn {
+        padding: 4px 6px !important;
+        font-size: 0.70rem !important;
+        border-radius: 4px !important;
+    }
+
+    /* Ícones diminuem também */
+    .compact-table .icon-sm {
+        font-size: 0.85rem !important;
+    }
+}
+/* Animação do popup */
+@keyframes popupShow {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.animate-popup {
+    animation: popupShow 0.5s ease-out;
+}
+
+/* ====== Efeito 3D nos Cards ====== */
+.card-3d {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transform-style: preserve-3d;
+    cursor: pointer;
+}
+
+.card-3d:hover {
+    transform: translateY(-6px) rotateX(6deg) rotateY(-6deg) scale(1.03);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.15);
+}
+
+/* Cartão de status da revelação */
+.reveal-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #dcfce7; /* verde claro */
+    border: 1px solid #22c55e; /* verde */
+    font-weight: 600;
+    color: #14532d;
+    flex-wrap: wrap;
+}
+
+.reveal-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.reveal-date {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 22px;
+    margin-top: -2px;
+    color: #166534;
+}
+
+.reveal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    background: #bbf7d0; 
+    border: 2px solid #22c55e;
+    border-radius: 12px;
+    color: #166534;
+    font-weight: 700;
+    transition: .25s ease;
+}
+
+.reveal-btn:hover {
+    background: #86efac;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(34,197,94,0.3);
+}
+
+/* Botão principal roxo (de quem ainda NÃO revelou) */
+.btn-reveal-primary {
+    background: #4f46e5;
+    padding: 10px 14px;
+    border-radius: 14px;
+    color: #fff;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 3px solid #4338ca;
+    transition: .25s ease;
+}
+
+.btn-reveal-primary:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+}
+
+/* Responsivo no celular */
+@media (max-width: 480px) {
+    .reveal-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .reveal-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+/* Correções para Safari iOS */
+.reveal-btn, .btn-reveal-primary {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+.reveal-btn:hover, .btn-reveal-primary:hover {
+    -webkit-transform: translateY(-2px) scale(1.02);
+    transform: translateY(-2px) scale(1.02);
+    -webkit-transition: .25s ease;
+    transition: .25s ease;
+}
+
+.reveal-again-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.reveal-again-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.12);
+}
+.btn-reveal-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;        /* impede quebra feia */
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box; /* 🆕 evita cortes */
+}
+@media (max-width: 480px) {
+    .btn-reveal-primary {
+        font-size: 0.80rem;
+        padding: 8px 10px;
+        width: 100%;              /* ocupa toda largura no mobile */
+    }
+}
+/* Força alinhamento correto no iPhone */
+@media (max-width: 480px) {
+    .reveal-box {
+        width: 100%;
+    }
+    .reveal-box > div:first-child {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .reveal-box, .btn-reveal-primary {
+        margin-top: 6px;
+    }
+}
+/* ===== Correção Final para Alinhamento ===== */
+.participant-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+/* No mobile, força empilhamento e largura correta */
+@media (max-width: 480px) {
+    .participant-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .reveal-box,
+    .btn-reveal-primary {
+        width: 100%;
+    }
+}
+@media (max-width: 480px) {
+    .btn-reveal-primary {
+        font-size: 0.78rem;
+        padding: 7px 12px;
+        white-space: normal; /* permite quebra suave */
+        text-align: center;
+    }
+}
+/* ===== Ajuste de alinhamento do botão e status ===== */
+.participant-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start !important;  /* <-- mantém topo alinhado */
+    gap: 12px;
+}
+
+/* Nome + avatar deve ficar alinhado ao topo também */
+.participant-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+/* ===== Centralizar conteúdo no MOBILE ===== */
+@media (max-width: 480px) {
+    .participant-row {
+        flex-direction: column;
+        align-items: center !important;
+        text-align: center;
+        padding: 16px 12px;
+    }
+
+    .participant-info {
+        flex-direction: column;
+        align-items: center !important;
+        text-align: center;
+    }
+
+    .participant-info span.text-xl {
+        font-size: 1.15rem;
+        margin-top: 4px;
+    }
+
+    .reveal-box, .btn-reveal-primary {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .reveal-date {
+        margin-left: 0 !important;
+        text-align: center;
+        width: 100%;
+    }
+}
+
