@@ -52,10 +52,26 @@ class Participant extends Model
         }
     }
 
-    // public function setWhatsappAttribute($value)
-    // {
-    //     $this->attributes['whatsapp'] = !empty($value) ? Crypt::encryptString($value) : null;
-    // }
+    public function getWhatsappAttribute(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (str_starts_with($value, 'eyJpdiI6')) {
+            try {
+                $value = Crypt::decryptString($value);
+            } catch (DecryptException) {
+                return null;
+            }
+        }
+
+        $number = trim($value);
+
+        return preg_match('/^\+?[0-9 ().-]+$/D', $number) && preg_match('/[0-9]/', $number)
+            ? $number
+            : null;
+    }
 
     // public function setWishlistAttribute($value)
     // {
@@ -68,7 +84,7 @@ class Participant extends Model
         $value = parent::getAttribute($key);
 
         // Aplica fallback apenas em campos criptografados
-        if (in_array($key, ['name', 'whatsapp', 'wishlist']) && !empty($value)) {
+        if (in_array($key, ['name', 'wishlist']) && !empty($value)) {
             // Detecta se o valor "parece" criptografado (base64 + prefixo esperado)
             $isEncrypted = is_string($value) && str_starts_with($value, 'eyJpdiI6');
 

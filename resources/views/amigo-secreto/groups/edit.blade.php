@@ -91,7 +91,9 @@
                     <tr>
                         <td class="p-2 border">{{ $p->name }}</td>
                         <td class="p-2 border">{{ $p->email }}</td>
-                        <td class="p-2 border">{{ $p->whatsapp ?? '—' }}</td>
+                        <td class="p-2 border">
+                            {{ $p->whatsapp ?? (filled($p->getRawOriginal('whatsapp')) ? 'Número indisponível' : '—') }}
+                        </td>
                         <td class="p-2 border">{{ $p->wishlist }}</td>
                         <td class="p-2 border text-center">
                             <div class="flex justify-center gap-2">

@@ -41,7 +41,7 @@ class ParticipantImportController extends Controller
             'participants.required' => 'Selecione pelo menos um participante.',
         ]);
 
-        [$added, $skipped, $unreadableEmails] = DB::transaction(function () use ($group, $data) {
+        [$added, $skipped, $unreadableEmails, $unavailableWhatsapps] = DB::transaction(function () use ($group, $data) {
             $destination = Group::lockForUpdate()->findOrFail($group->id);
             Gate::authorize('manage', $destination);
 
@@ -58,6 +58,7 @@ class ParticipantImportController extends Controller
             $existing = $destination->participants()->get();
             $added = 0;
             $unreadableEmails = 0;
+            $unavailableWhatsapps = 0;
 
             foreach ($participants as $participant) {
                 if ($existing->contains(fn (Participant $current) =>
@@ -72,9 +73,19 @@ class ParticipantImportController extends Controller
                     $unreadableEmails++;
                 }
 
+                $whatsapp = $participant->whatsapp;
+                if ($whatsapp !== null && strlen($whatsapp) > 20) {
+                    $whatsapp = preg_replace('/[ ().-]/', '', $whatsapp);
+                    $whatsapp = strlen($whatsapp) <= 20 ? $whatsapp : null;
+                }
+                if ($whatsapp === null && filled($participant->getRawOriginal('whatsapp'))) {
+                    $unavailableWhatsapps++;
+                }
+
                 $copy = $destination->participants()->make([
-                    ...$participant->only(['name', 'gender', 'whatsapp', 'photo']),
+                    ...$participant->only(['name', 'gender', 'photo']),
                     'email' => $email,
+                    'whatsapp' => $whatsapp,
                     'secret_key' => Str::upper(Str::random(12)),
                 ]);
                 $copy->forceFill(['imported_from_participant_id' => $participant->id])->save();
@@ -82,7 +93,7 @@ class ParticipantImportController extends Controller
                 $added++;
             }
 
-            return [$added, $participants->count() - $added, $unreadableEmails];
+            return [$added, $participants->count() - $added, $unreadableEmails, $unavailableWhatsapps];
         });
 
         $message = $added === 1 ? '1 participante importado.' : "{$added} participantes importados.";
@@ -93,9 +104,16 @@ class ParticipantImportController extends Controller
         }
 
         $response = redirect()->route('groups.edit', $group)->with('success', $message);
+        $warnings = [];
         if ($unreadableEmails > 0) {
-            $response->with('participant_import_warning',
-                "Não foi possível ler {$unreadableEmails} e-mail(s) do grupo anterior. Confira os participantes importados e preencha os e-mails em branco, se necessário.");
+            $warnings[] = "Não foi possível ler {$unreadableEmails} e-mail(s) do grupo anterior.";
+        }
+        if ($unavailableWhatsapps > 0) {
+            $warnings[] = "{$unavailableWhatsapps} contato(s) de WhatsApp do grupo anterior estavam mascarados ou ilegíveis.";
+        }
+        if ($warnings !== []) {
+            $warnings[] = 'Confira os participantes importados e preencha os contatos em branco, se necessário.';
+            $response->with('participant_import_warning', implode(' ', $warnings));
         }
 
         return $response;

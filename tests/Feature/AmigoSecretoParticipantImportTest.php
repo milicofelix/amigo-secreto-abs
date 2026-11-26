@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Crypt;
 use Tests\Concerns\HasOrganizerGroups;
 use Tests\TestCase;
 
@@ -42,6 +43,35 @@ class AmigoSecretoParticipantImportTest extends TestCase
     }
 
     use HasOrganizerGroups, RefreshDatabase;
+
+    public function test_import_reads_encrypted_whatsapp_and_ignores_masked_or_unreadable_numbers(): void
+    {
+        $this->signInOrganizer();
+        $destination = $this->ownedGroup(['name' => 'Atual', 'event_date' => '2026-12-24']);
+        $source = $this->ownedGroup(['name' => 'Anterior', 'event_date' => '2025-12-24']);
+        $masked = $source->participants()->create(['name' => 'Máscara do dump', 'whatsapp' => '*************']);
+        $encrypted = $source->participants()->create(['name' => 'Cifrado', 'whatsapp' => Crypt::encryptString('+55 (11) 91234-5678')]);
+        $oldEncryption = new Encrypter(random_bytes(32), 'AES-256-CBC');
+        $unreadable = $source->participants()->create(['name' => 'Chave antiga', 'whatsapp' => $oldEncryption->encryptString('11912345679')]);
+        $destination->participants()->create(['name' => 'Importação anterior', 'whatsapp' => '*************']);
+
+        $this->post(route('participants.import.store', $destination), [
+            'source' => $source->id,
+            'participants' => [$masked->id, $encrypted->id, $unreadable->id],
+        ])->assertRedirect(route('groups.edit', $destination))
+            ->assertSessionHas('success', '3 participantes importados.')
+            ->assertSessionHas('participant_import_warning');
+
+        $imported = $destination->participants()->get()->keyBy('imported_from_participant_id');
+        $this->assertNull($imported[$masked->id]->getRawOriginal('whatsapp'));
+        $this->assertNull($imported[$unreadable->id]->getRawOriginal('whatsapp'));
+        $this->assertSame('+55 (11) 91234-5678', $imported[$encrypted->id]->whatsapp);
+        $this->assertSame('*************', $masked->fresh()->getRawOriginal('whatsapp'));
+        $this->get(route('groups.edit', $destination))->assertOk()
+            ->assertSee('2 contato(s) de WhatsApp')
+            ->assertSee('Número indisponível')
+            ->assertDontSee('*************');
+    }
 
     public function test_it_imports_selected_participants_without_carrying_over_draw_state_or_duplicating_them(): void
     {
