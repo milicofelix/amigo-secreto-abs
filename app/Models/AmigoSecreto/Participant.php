@@ -37,6 +37,21 @@ class Participant extends Model
         $this->attributes['email'] = !empty($value) ? Crypt::encryptString($value) : null;
     }
 
+    public function getEmailAttribute(?string $value): ?string
+    {
+        if ($value === null || str_contains($value, '@') || !str_starts_with($value, 'eyJpdiI6')) {
+            return $value;
+        }
+
+        try {
+            $email = Crypt::decryptString($value);
+
+            return str_contains($email, '@') ? $email : null;
+        } catch (DecryptException) {
+            return null;
+        }
+    }
+
     // public function setWhatsappAttribute($value)
     // {
     //     $this->attributes['whatsapp'] = !empty($value) ? Crypt::encryptString($value) : null;
@@ -53,7 +68,7 @@ class Participant extends Model
         $value = parent::getAttribute($key);
 
         // Aplica fallback apenas em campos criptografados
-        if (in_array($key, ['name', 'email', 'whatsapp', 'wishlist']) && !empty($value)) {
+        if (in_array($key, ['name', 'whatsapp', 'wishlist']) && !empty($value)) {
             // Detecta se o valor "parece" criptografado (base64 + prefixo esperado)
             $isEncrypted = is_string($value) && str_starts_with($value, 'eyJpdiI6');
 

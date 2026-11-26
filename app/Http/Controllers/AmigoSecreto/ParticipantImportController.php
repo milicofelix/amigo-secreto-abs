@@ -43,7 +43,7 @@ class ParticipantImportController extends Controller
             'participants.required' => 'Selecione pelo menos um participante.',
         ]);
 
-        [$added, $skipped] = DB::transaction(function () use ($request, $group, $data) {
+        [$added, $skipped, $unreadableEmails] = DB::transaction(function () use ($request, $group, $data) {
             $destination = Group::lockForUpdate()->findOrFail($group->id);
             $this->authorizeDestination($request, $destination);
 
@@ -59,6 +59,7 @@ class ParticipantImportController extends Controller
 
             $existing = $destination->participants()->get();
             $added = 0;
+            $unreadableEmails = 0;
 
             foreach ($participants as $participant) {
                 if ($existing->contains(fn (Participant $current) =>
@@ -68,8 +69,14 @@ class ParticipantImportController extends Controller
                     continue;
                 }
 
+                $email = $participant->email;
+                if ($email === null && filled($participant->getRawOriginal('email'))) {
+                    $unreadableEmails++;
+                }
+
                 $copy = $destination->participants()->make([
-                    ...$participant->only(['name', 'gender', 'email', 'whatsapp', 'photo']),
+                    ...$participant->only(['name', 'gender', 'whatsapp', 'photo']),
+                    'email' => $email,
                     'secret_key' => Str::upper(Str::random(12)),
                 ]);
                 $copy->forceFill(['imported_from_participant_id' => $participant->id])->save();
@@ -77,7 +84,7 @@ class ParticipantImportController extends Controller
                 $added++;
             }
 
-            return [$added, $participants->count() - $added];
+            return [$added, $participants->count() - $added, $unreadableEmails];
         });
 
         $message = $added === 1 ? '1 participante importado.' : "{$added} participantes importados.";
@@ -87,7 +94,13 @@ class ParticipantImportController extends Controller
                 : " {$skipped} cadastros já existentes foram ignorados.";
         }
 
-        return redirect()->route('groups.edit', $group)->with('success', $message);
+        $response = redirect()->route('groups.edit', $group)->with('success', $message);
+        if ($unreadableEmails > 0) {
+            $response->with('participant_import_warning',
+                "Não foi possível ler {$unreadableEmails} e-mail(s) do grupo anterior. Confira os participantes importados e preencha os e-mails em branco, se necessário.");
+        }
+
+        return $response;
     }
 
     private function authorizeDestination(Request $request, Group $group): void

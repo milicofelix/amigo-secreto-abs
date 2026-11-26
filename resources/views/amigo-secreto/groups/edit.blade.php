@@ -14,6 +14,11 @@
     @if(session('error'))
         <div class="bg-red-100 text-red-800 p-3 rounded mb-4">{{ session('error') }}</div>
     @endif
+    @if(session('participant_import_warning'))
+        <div role="status" class="bg-yellow-100 text-yellow-900 p-3 rounded mb-4">
+            {{ session('participant_import_warning') }}
+        </div>
+    @endif
 
 
     {{-- Participantes --}}

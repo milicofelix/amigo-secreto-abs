@@ -4,11 +4,42 @@ namespace Tests\Feature;
 
 use App\Models\AmigoSecreto\Group;
 use App\Models\User;
+use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AmigoSecretoParticipantImportTest extends TestCase
 {
+    public function test_import_skips_only_unreadable_email_and_keeps_valid_long_email(): void
+    {
+        $destination = Group::create(['name' => 'Atual', 'event_date' => '2026-12-24']);
+        $source = Group::create(['name' => 'Anterior', 'event_date' => '2025-12-24']);
+        $legacy = $source->participants()->create(['name' => 'Cadastro antigo']);
+        $oldEncryption = new Encrypter(random_bytes(32), 'AES-256-CBC');
+        $oldPayload = $oldEncryption->encryptString('antigo@example.test');
+        DB::table('participants')->where('id', $legacy->id)->update(['email' => $oldPayload]);
+
+        $longEmail = str_repeat('a', 64).'@'.str_repeat('b', 50).'.'.str_repeat('c', 50).'.test';
+        $readable = $source->participants()->create(['name' => 'Cadastro legível', 'email' => $longEmail]);
+
+        $this->assertNull($legacy->fresh()->email);
+        $this->post(route('participants.import.store', $destination), [
+            'source' => $source->id, 'participants' => [$legacy->id, $readable->id],
+        ])->assertRedirect(route('groups.edit', $destination))
+            ->assertSessionHas('success', '2 participantes importados.')
+            ->assertSessionHas('participant_import_warning');
+
+        $this->assertNull($destination->participants()->where('imported_from_participant_id', $legacy->id)->sole()->email);
+        $copy = $destination->participants()->where('imported_from_participant_id', $readable->id)->sole();
+        $this->assertSame($longEmail, $copy->email);
+        $this->assertGreaterThan(255, strlen($copy->getRawOriginal('email')));
+        $this->assertSame($oldPayload, $legacy->fresh()->getRawOriginal('email'));
+        $this->get(route('groups.edit', $destination))->assertOk()
+            ->assertSee('Não foi possível ler 1 e-mail(s)')
+            ->assertDontSee($oldPayload);
+    }
+
     use RefreshDatabase;
 
     public function test_it_imports_selected_participants_without_carrying_over_draw_state_or_duplicating_them(): void
