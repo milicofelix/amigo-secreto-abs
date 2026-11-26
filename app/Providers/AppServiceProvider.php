@@ -45,7 +45,7 @@ class AppServiceProvider extends ServiceProvider
             $groups = $user?->is_organizer
                 ? Group::createdBy($user)->select('id', 'name', 'event_date', 'created_at')->orderBy('name')->get()
                 : collect();
-            $years = $groups->map(fn (Group $group) => $group->eventYear())
+            $years = $groups->toBase()->map(fn (Group $group) => $group->eventYear())
                 ->push(now()->year, $year)->unique()->sortDesc();
 
             $view->with([

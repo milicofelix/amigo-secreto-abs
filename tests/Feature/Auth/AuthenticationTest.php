@@ -42,6 +42,19 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_a_new_organizer_can_open_the_dashboard_and_group_list_after_login(): void
+    {
+        $user = User::factory()->organizer()->create();
+
+        $this->followingRedirects()->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk()->assertSee('Nenhum grupo em '.now()->year.'.');
+
+        $this->get(route('groups.index', ['year' => now()->year - 1]))
+            ->assertOk()->assertSee('Nenhum grupo em '.(now()->year - 1).'.');
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->organizer()->create();
