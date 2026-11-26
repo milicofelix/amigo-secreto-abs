@@ -65,11 +65,17 @@ class AmigoSecretoFlowTest extends TestCase
 
         $group->participants()->create(['name' => 'João']);
         $resultUrl = route('draw.show', $group);
+        $editUrl = route('groups.edit', $group);
+
+        $this->get($editUrl)->assertOk()->assertSee('Sortear Amigo Secreto');
 
         $this->post(route('draw.store', $group))->assertRedirect($resultUrl);
         $this->assertDatabaseCount('assignments', 2);
 
         $this->get($resultUrl)->assertOk()->assertSee('Sorteio realizado!');
         $this->get($resultUrl)->assertOk()->assertDontSee('Sorteio realizado!');
+        $this->get($editUrl)->assertOk()
+            ->assertDontSee('Sortear Amigo Secreto')
+            ->assertSee('Ver Resultado do Sorteio');
     }
 }

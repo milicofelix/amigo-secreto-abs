@@ -169,28 +169,23 @@
 
     {{-- Sorteio --}}
     <div class="bg-white p-4 shadow rounded text-center">
-        <h2 class="text-xl font-semibold mb-3">🎲 Realizar Sorteio</h2>
+        <h2 class="text-xl font-semibold mb-3">{{ $hasCompletedDraw ? '🎲 Sorteio realizado' : '🎲 Realizar Sorteio' }}</h2>
 
-        <form action="{{ route('draw.store', $group) }}"
-              method="POST"
-              onsubmit="return confirm('Deseja realmente sortear?')">
-
-            @csrf
-
-            <button class="bg-blue-600 text-white px-6 py-3 rounded text-lg w-full md:w-auto">
-                Sortear Amigo Secreto
-            </button>
-
-            @if($hasCompletedDraw)
-                <div class="mt-4">
-                    <a href="{{ route('draw.show', ['group' => $group->id]) }}"
-                       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition">
-                        👁️ Ver Resultado do Sorteio
-                    </a>
-                </div>
-            @endif
-
-        </form>
+        @if ($hasCompletedDraw)
+            <a href="{{ route('draw.show', $group) }}"
+               class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                👁️ Ver Resultado do Sorteio
+            </a>
+        @else
+            <form action="{{ route('draw.store', $group) }}"
+                  method="POST"
+                  onsubmit="return confirm('Deseja realmente sortear?')">
+                @csrf
+                <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded text-lg w-full md:w-auto">
+                    Sortear Amigo Secreto
+                </button>
+            </form>
+        @endif
     </div>
 
 </div>
