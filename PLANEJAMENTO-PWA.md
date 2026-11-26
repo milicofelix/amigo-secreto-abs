@@ -36,15 +36,15 @@ Commit sugerido — `git c "feat: adiciona tela offline e cache de arquivos púb
 
 ## Fase 3 — Instalação
 
-- [ ] Exibir a opção **Instalar app** quando o navegador oferecer essa ação ao site.
-- [ ] Incluir uma orientação curta para adicionar o app à tela inicial no iPhone.
-- [ ] Conferir que o app abre pelo ícone depois de instalado.
+- [x] Exibir **Instalar app** na seleção de grupos quando o navegador disponibilizar o instalador.
+- [x] Incluir instruções para adicionar o app à tela inicial do iPhone ou iPad.
+- [ ] Confirmar em um dispositivo que o app abre pelo ícone após a instalação.
 
 ### Teste manual no navegador
 
-1. Em um navegador compatível, com o app ainda por instalar, use **Instalar app** e aceite a instalação.
-2. No iPhone, abra o site no Safari e siga a orientação exibida pelo app para adicioná-lo à tela inicial.
-3. Abra pelo ícone em cada dispositivo. A seleção de grupos deve abrir com o ano atual selecionado.
+1. Em uma janela normal do Chrome ou Edge, abra `http://localhost:8085/` com o app ainda por instalar. Na seleção de grupos, clique em **Instalar app** quando aparecer. O navegador deve abrir o diálogo nativo. Aceite a instalação. No Android, use uma URL HTTPS de teste no Chrome.
+2. No iPhone ou iPad, abra uma URL HTTPS de teste no Safari e expanda **Instalar no iPhone ou iPad**. Use **Compartilhar → Adicionar à Tela de Início**, ative **Abrir como App da Web** se aparecer e toque em **Adicionar**.
+3. Abra pelo novo ícone em cada dispositivo. O app deve abrir na seleção de grupos do ano atual, sem oferecer a instalação novamente dentro do app.
 
 Commit sugerido — `git c "feat: adiciona opção de instalação do PWA"`
 

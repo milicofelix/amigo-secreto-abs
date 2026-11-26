@@ -15,6 +15,9 @@
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <meta name="theme-color" content="#4f46e5">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/pwa-icon-180.png') }}">
+    @if (request()->routeIs('dashboard.select'))
+        <script src="{{ asset('pwa-install.js') }}" defer></script>
+    @endif
 
     {{-- Tailwind via CDN --}}
     <script src="https://cdn.tailwindcss.com"></script>
