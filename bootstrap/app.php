@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\CountUniqueVisitor::class,
         ]);
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\EnableRaffles::class,
+        );
         $middleware->redirectUsersTo(fn () => route('home', absolute: false));
     })
     ->withExceptions(function (Exceptions $exceptions): void {

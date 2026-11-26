@@ -29,5 +29,8 @@
         </div>
     </form>
 
+    <a href="{{ route('groups.edit', $group, absolute: false) }}" class="mt-4 inline-block font-semibold text-indigo-700 underline">
+        ← Voltar ao grupo
+    </a>
 </div>
 @endsection

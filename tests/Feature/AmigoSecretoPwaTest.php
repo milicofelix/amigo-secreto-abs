@@ -32,6 +32,10 @@ class AmigoSecretoPwaTest extends TestCase
         $this->postJson(route('participant.status.update'), $status)->assertUnauthorized();
         $this->post(route('pwa.participant.verify'), ['code' => self::CODE])->assertRedirect(route('pwa.participant'));
         $this->get(route('pwa.participant'))->assertOk()->assertSee($other->name)->assertHeader('Cache-Control', 'no-store, private');
+        $this->get(route('home'))->assertOk()
+            ->assertSee('data-draw-id="'.$draw->id.'"', false)
+            ->assertSee('data-invite-scope="'.$participant->inviteScope().'"', false)
+            ->assertDontSee($other->name);
         $this->postJson(route('participant.status.update'), ['participant_id' => $other->id] + $status)->assertForbidden();
         $this->postJson(route('participant.status.update'), ['field' => 'email'] + $status)->assertUnprocessable();
         $this->postJson(route('participant.status.update'), $status)->assertNoContent();

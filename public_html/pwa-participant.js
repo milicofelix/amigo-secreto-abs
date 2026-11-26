@@ -2,11 +2,11 @@
     const panel = document.getElementById('pwa-participant');
     function showInviteFromLink() {
         const fragment = new URLSearchParams(location.hash.slice(1));
-        if (!fragment.has('convite')) return false;
-
+        const entry = document.getElementById('participant-entry');
+        if (!entry || !fragment.has('convite')) return false;
 
         history.replaceState(history.state, '', location.pathname + location.search);
-        document.getElementById('participant-entry').hidden = false;
+        entry.hidden = false;
         const session = document.getElementById('participant-session');
         if (session) session.hidden = true;
 

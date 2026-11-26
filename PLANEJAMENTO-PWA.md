@@ -1,6 +1,6 @@
 # Planejamento do PWA — Amigo Secreto ABS
 
-A primeira versão deve poder ser instalada e, ao abrir pelo ícone, levar à seleção de grupos do ano atual. Sem conexão, o app apresenta uma tela offline. Consultar participantes, revelar resultados, criar grupos e realizar sorteios exige conexão.
+A abertura pelo ícone usa o mesmo início da versão web. Participantes acessam o portal pelo convite, organizadores autenticados vão à seleção de grupos do ano atual e o Super Admin vai à visão global. Sem conexão, o app apresenta uma tela offline. Consultar participantes, revelar resultados, criar grupos e realizar sorteios exige conexão.
 
 Toda entrega deve incluir um roteiro de teste manual no navegador, com os passos e o resultado esperado. No computador, use `http://localhost:8085` com o Docker rodando. Para testar em um celular, use a URL HTTPS de um ambiente de teste acessível pelo aparelho.
 
@@ -12,7 +12,7 @@ Toda entrega deve incluir um roteiro de teste manual no navegador, com os passos
 
 ### Teste manual no navegador
 
-1. Abra `http://localhost:8085/`. A página deve redirecionar para `/dashboard/select-group?year=<ano-atual>`, com o ano atual selecionado.
+1. Abra `http://localhost:8085/` com a sessão de organizador ativa. A página deve redirecionar para `/dashboard/select-group?year=<ano-atual>`, com o ano atual selecionado.
 2. No Chrome ou Edge, abra o DevTools e acesse **Application → Manifest**. Confira o nome **Amigo Secreto ABS**, as cores e os ícones de 192 e 512 px.
 3. Abra `http://localhost:8085/images/pwa-icon-180.png` em outra aba. O ícone da tela inicial do iPhone deve carregar.
 
@@ -44,7 +44,7 @@ Commit sugerido — `git c "feat: adiciona tela offline e cache de arquivos púb
 
 1. Em uma janela normal do Chrome ou Edge, abra `http://localhost:8085/` com o app ainda por instalar. Na seleção de grupos, clique em **Instalar app** quando aparecer. O navegador deve abrir o diálogo nativo. Aceite a instalação. No Android, use uma URL HTTPS de teste no Chrome.
 2. No iPhone ou iPad, abra uma URL HTTPS de teste no Safari e expanda **Instalar no iPhone ou iPad**. Use **Compartilhar → Adicionar à Tela de Início**, ative **Abrir como App da Web** se aparecer e toque em **Adicionar**.
-3. Abra pelo novo ícone em cada dispositivo. O app deve abrir na seleção de grupos do ano atual, sem oferecer a instalação novamente dentro do app.
+3. Abra pelo novo ícone em cada dispositivo. Confira se a tela inicial corresponde à sessão atual e se a opção de instalação deixa de aparecer no app instalado.
 
 Commit sugerido — `git c "feat: adiciona opção de instalação do PWA"`
 
@@ -86,7 +86,7 @@ A primeira notificação avisa ao participante que o sorteio foi realizado. Para
 
 1. Use um grupo de teste. Antes do sorteio, abra **Meu Amigo Secreto** no Chrome, informe o código e toque em **Ativar notificações**. Em outro navegador ou perfil, negue a permissão.
 2. Realize o sorteio. Confira que o participante inscrito recebe um aviso genérico e que o perfil que negou a permissão continua usando o app normalmente.
-3. Clique no aviso e confira que o app pede a verificação de acesso antes da revelação. Desative as notificações e confira que a inscrição deixou de receber avisos.
+3. Clique no aviso e confira se abre **Meu Amigo Secreto**. Com sessão válida, o resultado individual deve aparecer. Sem sessão válida, o app deve pedir o convite. Desative as notificações e confira que a inscrição deixou de receber avisos.
 4. No iPhone ou iPad, abra o PWA pela Tela de Início antes de tocar em **Ativar notificações**. Repita o fluxo pela URL HTTPS de teste. [WebKit — Web Push no iOS e iPadOS](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/)
 
 Commit sugerido — `git c "feat: envia notificação push após o sorteio"`
@@ -96,7 +96,7 @@ Commit sugerido — `git c "feat: envia notificação push após o sorteio"`
 O piloto é **Marcar presente como comprado**. A pessoa abre o fluxo enquanto está conectada, pode registrar a ação se perder a conexão e vê o status **Pendente de sincronização** até o servidor confirmar. Sorteios, revelações e administração de grupos exigem conexão.
 
 - [x] Restringir a atualização ao próprio participante, com campos permitidos e preservação da primeira data de confirmação.
-- [x] Guardar no IndexedDB uma única intenção de compra por participante, com prazo de sete dias. Senhas, códigos de acesso e resultados ficam fora da fila.
+- [x] Guardar no IndexedDB uma única intenção de compra por participante, associada ao convite e ao sorteio atuais, com prazo de sete dias. Senhas, códigos de acesso e resultados ficam fora da fila.
 - [x] Sincronizar ao voltar à rede ou reabrir o app com sessão válida. Exibir opção de reenvio e pedir nova verificação se a sessão expirar.
 - [x] Exibir **Pendente**, **Sincronizado** e **Precisa de atenção**. A sincronização ocorre com o app aberto.
 

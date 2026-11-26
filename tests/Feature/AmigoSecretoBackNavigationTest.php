@@ -28,6 +28,8 @@ class AmigoSecretoBackNavigationTest extends TestCase
             [route('participants.qr', ['group' => $group, 'participant' => $participant->id]), route('groups.edit', $group, absolute: false)],
             [route('dashboard.start-draw', $group), $dashboard],
             [$draw, $groups],
+            [route('participants.edit', [$group, $participant]), route('groups.edit', $group, absolute: false)],
+            [route('participants.create', $group), route('groups.edit', $group, absolute: false)],
             [route('participants.import', $group), route('groups.edit', $group, absolute: false)],
             [route('dashboard.revealed-friends', $olderGroup), route('amigo.dashboard', $olderGroup, absolute: false)],
         ];
@@ -41,8 +43,9 @@ class AmigoSecretoBackNavigationTest extends TestCase
         }
     }
 
-    public function test_pix_back_link_returns_to_its_raffle(): void
+    public function test_pix_back_link_returns_to_its_raffle_when_the_legacy_module_is_enabled(): void
     {
+        config(['features.raffles' => true]);
         $rifa = Rifa::create(['titulo' => 'Rifa de teste', 'valor' => 10]);
         $nome = $rifa->nomes()->create(['nome' => 'Número de teste']);
         $destination = route('rifas.show', $rifa, absolute: false);

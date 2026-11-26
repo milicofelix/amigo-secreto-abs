@@ -136,6 +136,18 @@ class Participant extends Model
         return $this->hasMany(Assignment::class, 'giver_id');
     }
 
+    public function activeAssignments()
+    {
+        return $this->givenAssignments()->whereHas(
+            'draw', fn ($query) => $query->active()->where('group_id', $this->group_id)
+        );
+    }
+
+    public function inviteScope(): string
+    {
+        return hash_hmac('sha256', $this->pwa_access_hash, config('app.key'));
+    }
+
     public function receivedAssignments()
     {
         return $this->hasMany(Assignment::class, 'receiver_id');

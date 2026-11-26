@@ -3,7 +3,7 @@
 Aplicação Laravel com as rotas organizadas por funcionalidade:
 
 - `routes/amigo-secreto.php`: fluxo principal do Amigo Secreto;
-- `routes/rifas.php`: módulo legado de rifas, preservado e isolado;
+- `routes/rifas.php`: módulo legado de Rifas e PIX, desativado por padrão;
 - `routes/web.php`: apenas compõe os módulos.
 
 ## Ambiente Docker
@@ -28,6 +28,16 @@ serviços com `docker network create shared_net`. As credenciais de exemplo em
 
 O [roadmap do Amigo Secreto](ROADMAP-AMIGO-SECRETO.md) descreve como habilitar a
 primeira conta de organizador, vincular grupos antigos e testar o isolamento.
+
+## Preparação da publicação
+
+1. Faça backup do MySQL e de `storage/app`. Mantenha a `APP_KEY` da instalação e as chaves VAPID já usadas pelos dispositivos inscritos.
+2. No ambiente de publicação, defina `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` com a URL pública HTTPS, `SESSION_SECURE_COOKIE=true` e `AMIGO_SECRETO_RIFAS_ENABLED=false`. Termine o TLS no proxy, encaminhe o host público e configure `TRUSTED_PROXIES` somente com os IPs ou CIDRs dos proxies controlados que sobrescrevem os cabeçalhos encaminhados. Sirva `public_html/` na raiz do domínio.
+3. Configure o transporte de e-mail para recuperação de senha e avisos. Para push, siga a preparação do [planejamento do PWA](PLANEJAMENTO-PWA.md). Com fila assíncrona, supervisione um worker para `emails` e `default`.
+4. Após publicar o código, aplique as migrações com `docker compose exec app php artisan migrate --force` e atualize o cache de configuração com `docker compose exec app php artisan config:cache`. Reinicie os workers após o deploy com `docker compose exec app php artisan queue:restart`.
+5. Em homologação, confirme `/up` e `/manifest.webmanifest` com HTTP 200, `/rifas` com HTTP 404 e o roteiro da [Fase 5](ROADMAP-AMIGO-SECRETO.md#fase-5-validação-e-preparação-da-publicação), incluindo a entrega de push nos aparelhos.
+
+Para uma instalação que ainda utiliza Rifas e PIX, defina `AMIGO_SECRETO_RIFAS_ENABLED=true` e reconstrua o cache de configuração. O ajuste atua nas rotas e preserva as tabelas e os registros.
 
 ---
 

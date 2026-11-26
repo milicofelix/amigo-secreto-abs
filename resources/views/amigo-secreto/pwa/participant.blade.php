@@ -3,7 +3,7 @@
 @section('title', 'Meu Amigo Secreto')
 
 @push('head')
-    <script src="{{ asset('pwa-participant.js') }}?v=4" defer></script>
+    <script src="{{ asset('pwa-participant.js') }}?v=5" defer></script>
 @endpush
 
 @section('content')
@@ -29,7 +29,7 @@
         <div id="participant-session" @if ($errors->has('code') || session('invite_error')) hidden @endif>
         <div id="pwa-participant" data-participant="{{ $participant->id }}" data-csrf="{{ csrf_token() }}"
              data-draw-id="{{ $assignment?->draw_id }}"
-             data-invite-scope="{{ hash_hmac('sha256', $participant->pwa_access_hash, config('app.key')) }}"
+             data-invite-scope="{{ $participant->inviteScope() }}"
              data-status-url="{{ route('participant.status.update', absolute: false) }}"
              data-push-url="{{ route('pwa.push.subscribe', absolute: false) }}"
              data-push-key="{{ \App\Jobs\SendDrawWebPush::enabled() ? config('services.web_push.public_key') : '' }}">

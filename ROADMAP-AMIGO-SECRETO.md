@@ -103,13 +103,18 @@ Commit sugerido — `git c "feat: valida restrições e protege o histórico do 
 
 ## Fase 5 Validação e preparação da publicação
 
-- [ ] Alinhar a suíte de autenticação e perfil ao fluxo adotado e incluir testes de acesso entre grupos. Cobrir rotas web, convites e ações de escrita.
-- [ ] Desativar Rifas e PIX por configuração na instalação dedicada ao Amigo Secreto, preservando o código e os dados.
-- [ ] Conferir a importação do ano anterior, o upload de fotos, os botões **Voltar**, o cache público do PWA e a sincronização offline. Validar a entrega real de push em Android e iPhone conforme o [planejamento do PWA](PLANEJAMENTO-PWA.md).
+- [x] Alinhar a suíte de autenticação e perfil ao fluxo adotado. Confirmar isolamento entre grupos, convites e ações de escrita.
+- [x] Desativar Rifas e PIX por configuração na instalação dedicada ao Amigo Secreto, preservando o código e os dados. A opção `AMIGO_SECRETO_RIFAS_ENABLED` fica desativada por padrão.
+- [x] Conferir no Chrome a importação do ano anterior, o upload de fotos, os botões **Voltar**, o cache público do PWA e a sincronização offline ao reabrir pela página inicial.
+- [x] Documentar a [preparação da publicação](README.md#preparação-da-publicação), incluindo HTTPS, proxy, migrações e filas.
+- [ ] Confirmar abertura pelo ícone e entrega real de push em Android e iPhone usando homologação HTTPS e o [planejamento do PWA](PLANEJAMENTO-PWA.md).
+
+A validação local usou a suíte completa no Docker e um fluxo no Chrome com banco isolado e dados fictícios. O Docker retornou HTTP 200 para `/up`, o manifesto, o service worker e o portal. Rifas, PIX e a administração de Rifas retornaram HTTP 404.
 
 ### Teste manual no navegador
 
-1. Em um ambiente de teste, percorra login, criação de grupo, importação do ano anterior, convite, sorteio e consulta pelo participante.
-2. Repita a abertura pelo ícone, a perda de conexão e a reconexão no PWA. Confira a entrega de um aviso de sorteio em dispositivos de teste.
+1. Entre como organizador, crie um grupo e importe participantes do ano anterior. Adicione um participante com foto JPEG e use **Voltar ao grupo** na edição, na importação e no convite.
+2. Abra o convite em outra sessão, confirme o sorteio e confira se o portal mostra apenas o resultado individual. Com o portal aberto, desconecte, marque o presente como comprado e feche a janela. Reconecte e reabra pela página inicial. A mensagem **Sincronizado** deve aparecer. Em **Application → Cache Storage**, confira que o cache contém só `offline.html` e o ícone.
+3. Em homologação HTTPS, instale em Chrome para Android e Safari no iPhone. Abra pelo ícone, entre com o convite de um grupo de teste ainda sem sorteio e ative as notificações. Coloque o app em segundo plano, realize o sorteio e confira a chegada do aviso, o texto genérico e a abertura de **Meu Amigo Secreto** ao tocar.
 
 Commit sugerido — `git c "test: valida permissões e fluxos do amigo secreto"`

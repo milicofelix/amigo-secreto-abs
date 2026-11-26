@@ -1,7 +1,10 @@
 @props(['participant' => null])
 
-@if ($participant)
+@php($drawId = $participant?->activeAssignments()->latest('id')->value('draw_id'))
+
+@if ($drawId)
     <div id="pwa-participant" class="mb-4 text-sm" data-participant="{{ $participant->id }}"
+         data-draw-id="{{ $drawId }}" data-invite-scope="{{ $participant->inviteScope() }}"
          data-csrf="{{ csrf_token() }}" data-status-url="{{ route('participant.status.update', absolute: false) }}">
         <button id="pwa-gift" type="button" data-recorded="{{ $participant->bought_gift ? 'yes' : 'no' }}" hidden></button>
         <p id="pwa-sync-status" role="status"></p>
@@ -10,5 +13,5 @@
             Verificar acesso novamente
         </a>
     </div>
-    <script src="{{ asset('pwa-participant.js') }}" defer></script>
+    <script src="{{ asset('pwa-participant.js') }}?v=5" defer></script>
 @endif

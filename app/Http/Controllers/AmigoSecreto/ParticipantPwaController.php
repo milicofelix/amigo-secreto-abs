@@ -16,8 +16,7 @@ class ParticipantPwaController extends Controller
     {
         $participant = $request->attributes->get('pwa.participant');
         $assignment = $participant?->group?->withDrawLock(function () use ($participant) {
-            $assignment = $participant->givenAssignments()
-                ->whereHas('draw', fn ($query) => $query->active()->where('group_id', $participant->group_id))
+            $assignment = $participant->activeAssignments()
                 ->with(['receiver' => fn ($query) => $query->select('id', 'name', 'wishlist')->where('group_id', $participant->group_id)])
                 ->latest('id')->first();
 

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\AmigoSecreto;
 
 use App\Http\Controllers\Controller;
-use App\Models\AmigoSecreto\Group;
 use Illuminate\Http\Request;
 
 class ParticipantStatusController extends Controller
@@ -20,9 +19,8 @@ class ParticipantStatusController extends Controller
         ]);
         abort_unless((int) $data['participant_id'] === $participant->id, 403);
 
-        $participant->group->withDrawLock(function (Group $locked) use ($participant, $data, $request) {
-            abort_unless($participant->givenAssignments()->where('draw_id', $data['draw_id'])
-                ->whereHas('draw', fn ($query) => $query->active()->where('group_id', $locked->id))->exists(), 409);
+        $participant->group->withDrawLock(function () use ($participant, $data, $request) {
+            abort_unless($participant->activeAssignments()->where('draw_id', $data['draw_id'])->exists(), 409);
 
             $field = $data['field'];
             $participant->newQuery()->withActiveInvite()->whereKey($participant->id)
