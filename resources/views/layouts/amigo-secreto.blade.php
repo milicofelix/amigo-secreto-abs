@@ -152,5 +152,12 @@
 
     {{-- Script JS opcional --}}
     <script src="{{ asset('js/app.js') }}"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js').catch((error) => {
+                console.warn('Não foi possível ativar o modo offline.', error);
+            });
+        }
+    </script>
 </body>
 </html>

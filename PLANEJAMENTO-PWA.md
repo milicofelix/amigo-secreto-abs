@@ -20,15 +20,17 @@ Commit sugerido — `git c "feat: adiciona manifesto e ícones do PWA"`
 
 ## Fase 2 — Modo offline
 
-- [ ] Registrar o service worker e criar uma tela de fallback offline.
-- [ ] Limitar o cache aos arquivos públicos necessários para essa tela, como ícones e estilos. Páginas de grupos, participantes, resultados e links de revelação devem ser buscados pela rede.
-- [ ] Verificar o comportamento ao perder e recuperar a conexão e ao atualizar a versão do cache.
+- [x] Registrar o service worker e criar uma tela de fallback offline.
+- [x] Limitar o cache à tela offline e ao ícone que ela usa. Páginas de grupos, participantes, resultados e links de revelação são buscados pela rede.
+- [x] Verificar em teste automatizado a perda e a recuperação da conexão, o isolamento do cache e a remoção da versão anterior.
 
 ### Teste manual no navegador
 
-1. Abra o app com conexão. No Chrome ou Edge, abra **DevTools → Application → Service Workers** e confira que o worker está ativo.
-2. Visite uma página de grupo com conexão. Marque **Offline** no painel do service worker e recarregue. A tela offline deve aparecer.
-3. Desmarque **Offline** e recarregue. A página do grupo deve carregar novamente. Em **Application → Cache Storage**, confira que só os arquivos públicos previstos para a tela offline foram armazenados.
+1. Abra `http://localhost:8085/` com conexão. No Chrome ou Edge, abra **DevTools → Application → Service Workers** e espere o worker ficar ativo. Deixe **Bypass for network** desmarcado.
+2. Visite uma página de grupo. Marque **Offline** no painel do service worker e recarregue normalmente. A tela **Você está sem conexão** deve aparecer com o logo e o botão **Tentar novamente**.
+3. Desmarque **Offline** e clique em **Tentar novamente**. A mesma página do grupo deve carregar.
+4. Em **Application → Cache Storage → amigo-secreto-offline-v1**, confira que constam apenas `/offline.html` e `/images/pwa-icon-192.png`.
+5. Quando houver alterações nesses arquivos, incremente a versão do cache em `public/service-worker.js`. Após carregar a nova versão, confira no DevTools que o cache anterior do Amigo Secreto foi removido.
 
 Commit sugerido — `git c "feat: adiciona tela offline e cache de arquivos públicos"`
 
