@@ -9,7 +9,6 @@ use App\Models\User;
 class Group extends Model
 {
     protected $fillable = [
-        // 'user_id',
         'name',
         'description',
         'budget_min',
@@ -17,6 +16,8 @@ class Group extends Model
         'event_date',
         'event_location',
     ];
+
+    protected $casts = ['user_id' => 'integer'];
 
     public static function selectedYear(mixed $year): int
     {
@@ -38,6 +39,11 @@ class Group extends Model
             $query->whereYear('event_date', $year)
                 ->orWhere(fn (Builder $query) => $query->whereNull('event_date')->whereYear('created_at', $year));
         });
+    }
+
+    public function scopeCreatedBy(Builder $query, User $user): Builder
+    {
+        return $query->where('user_id', $user->id);
     }
 
     // 🔹 Um grupo pertence a um usuário (dono do grupo)

@@ -28,14 +28,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-         $previous = session('previous_url');
-
-        if ($previous) {
-            session()->forget('previous_url');
-            return redirect()->to($previous);
-        }
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('dashboard.home', absolute: false));
     }
 
     /**

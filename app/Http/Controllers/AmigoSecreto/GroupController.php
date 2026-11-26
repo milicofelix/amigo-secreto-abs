@@ -5,7 +5,6 @@ namespace App\Http\Controllers\AmigoSecreto;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AmigoSecreto\Group;
-use Illuminate\Support\Facades\Auth;
 
 class GroupController extends Controller
 {
@@ -15,7 +14,7 @@ class GroupController extends Controller
     public function index(Request $request)
     {
         $selectedYear = Group::selectedYear($request->query('year'));
-        $groups = Group::forYear($selectedYear)->latest()->get();
+        $groups = Group::createdBy($request->user())->forYear($selectedYear)->latest()->get();
 
         return view('amigo-secreto.groups.index', compact('groups', 'selectedYear'));
     }
@@ -42,8 +41,9 @@ class GroupController extends Controller
             'event_location' => 'nullable|string|max:255',
         ]);
 
-        //$validated['user_id'] = Auth::id();
-        $group = Group::create($validated);
+        $group = new Group($validated);
+        $group->user()->associate($request->user());
+        $group->save();
 
         return redirect()->route('groups.index', ['year' => $group->eventYear()])->with('success', 'Grupo criado com sucesso!');
     }
@@ -51,9 +51,9 @@ class GroupController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Group $group)
     {
-        //
+        return redirect()->route('groups.edit', $group);
     }
 
     /**
@@ -61,7 +61,6 @@ class GroupController extends Controller
      */
     public function edit(Group $group)
     {
-        // $this->authorizeGroup($group);
         return view('amigo-secreto.groups.edit', compact('group'));
     }
 
@@ -70,8 +69,6 @@ class GroupController extends Controller
      */
     public function update(Request $request, Group $group)
     {
-        $this->authorizeGroup($group);
-
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'description'    => 'nullable|string',
@@ -91,14 +88,9 @@ class GroupController extends Controller
      */
     public function destroy(Group $group)
     {
-        $this->authorizeGroup($group);
         $group->delete();
 
         return redirect()->route('groups.index', ['year' => $group->eventYear()])->with('success', 'Grupo excluído com sucesso!');
     }
 
-     private function authorizeGroup(Group $group)
-    {
-        abort_unless($group->user_id === Auth::id(), 403, 'Acesso negado.');
-    }
 }

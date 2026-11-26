@@ -12,9 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\StorePreviousUrl::class,
             \App\Http\Middleware\CountUniqueVisitor::class,
         ]);
+        $middleware->redirectUsersTo(fn () => route('home', absolute: false));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontFlash(['code']);

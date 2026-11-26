@@ -26,6 +26,9 @@ Se o ambiente ainda não tiver a rede compartilhada, crie-a antes de subir os
 serviços com `docker network create shared_net`. As credenciais de exemplo em
 `.env.example` são apenas para desenvolvimento local.
 
+O [roadmap do Amigo Secreto](ROADMAP-AMIGO-SECRETO.md) descreve como habilitar a
+primeira conta de organizador, vincular grupos antigos e testar o isolamento.
+
 ---
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>

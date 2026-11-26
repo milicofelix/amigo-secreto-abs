@@ -81,8 +81,7 @@ class ParticipantController extends Controller
 
     public function accessByKey(Group $group, $id)
     {
-        $participant = Participant::findOrFail($id);
-        $group = Group::findOrFail($group->id);
+        $participant = $group->participants()->findOrFail($id);
 
         // 🔗 URL secreta
         $url = route('reveal.by.key', ['key' => $participant->secret_key]);

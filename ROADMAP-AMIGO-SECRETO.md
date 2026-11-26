@@ -15,16 +15,32 @@ Priorizar login, isolamento dos grupos e privacidade do sorteio. O organizador v
 
 ## Fase 1 Login e isolamento dos grupos
 
-- [ ] Habilitar login, logout e recuperação de senha do Organizador. A criação de contas fica sob controle administrativo na primeira versão.
-- [ ] Vincular cada grupo ao usuário autenticado no momento da criação. Aplicar permissões no servidor aos painéis, listagens, menus, importações e operações de gestão.
-- [ ] Conferir no servidor se o participante e a restrição pertencem ao grupo da ação. Substituir o código de exclusão enviado ao navegador por autorização no servidor.
-- [ ] Inventariar grupos antigos e fazer backup antes da migração. Vincular somente os grupos cujo criador for confirmado. Grupos sem vínculo confirmado ficam na visão do Super Admin quando ela estiver disponível.
+- [x] Habilitar login, logout e recuperação de senha do Organizador. A criação de contas fica sob controle administrativo na primeira versão.
+- [x] Vincular cada grupo ao usuário autenticado no momento da criação. Aplicar permissões no servidor aos painéis, listagens, menus, importações e operações de gestão.
+- [x] Conferir no servidor se o participante e a restrição pertencem ao grupo da ação. Substituir o código de exclusão enviado ao navegador por autorização no servidor.
+- [x] Inventariar os grupos antigos no MySQL local. Os três grupos estavam sem criador cadastrado e seguem preservados.
+- [ ] Fazer backup antes da vinculação e confirmar quem criou cada grupo antigo. Os grupos sem vínculo confirmado ficam reservados para a visão do Super Admin na Fase 2.
+
+### Preparação das contas
+
+Execute `docker compose exec app php artisan amigo-secreto:organizador SEU_EMAIL` para criar a conta. O comando solicita nome e senha no terminal. Para habilitar uma conta existente e manter sua senha, acrescente `--enable-existing`.
+
+Após o backup e a confirmação da autoria, vincule cada grupo antigo com `docker compose exec app php artisan amigo-secreto:vincular-grupo ID_DO_GRUPO SEU_EMAIL --confirm-creator`. O comando só aceita grupos sem vínculo e exige uma conta de organizador habilitada.
+
+Para consultar os IDs dos grupos sem vínculo pelo terminal, execute:
+
+```bash
+docker compose exec app php artisan tinker --execute='dump(\App\Models\AmigoSecreto\Group::whereNull("user_id")->get(["id", "name", "event_date"])->toArray());'
+```
+
+O ambiente local usa e-mail em log por padrão. Configure o transporte de e-mail e a URL pública do app para que a recuperação envie links utilizáveis em produção.
 
 ### Teste manual no navegador
 
-1. Crie dois organizadores de teste. Em janelas separadas, cada um cria um grupo e confere que sua listagem e o seletor mostram apenas o próprio grupo.
+1. Crie dois organizadores pelo comando acima. Em janelas separadas, entre em `http://localhost:8085/login`. Cada conta cria um grupo e confere que a listagem e o seletor mostram apenas o próprio grupo.
 2. Tente abrir o endereço de edição do grupo da outra conta. A aplicação deve recusar o acesso. Após sair, abrir a área de gestão deve redirecionar para o login.
-3. Confirme em testes automatizados que as operações de alteração também recusam mudanças em grupos alheios.
+3. Abra a página inicial em uma janela sem sessão e escolha **Entrar com meu convite**. O portal individual deve carregar sem mostrar a lista administrativa.
+4. Em um ambiente com e-mail configurado, use **Esqueci minha senha**, abra o link recebido e entre com a nova senha.
 
 Commit sugerido — `git c "feat: protege a gestão de grupos com login e permissões"`
 

@@ -15,7 +15,7 @@
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
     <meta name="theme-color" content="#4f46e5">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/pwa-icon-180.png') }}">
-    @if (request()->routeIs('dashboard.select'))
+    @if (request()->routeIs('home', 'dashboard.select'))
         <script src="{{ asset('pwa-install.js') }}" defer></script>
     @endif
 
@@ -32,19 +32,20 @@
     <nav class="bg-indigo-600 text-white shadow relative"> {{-- ✅ (AQUI) adicionei relative no nav para reforçar o contexto do absolute --}}
 
         {{-- ✅ (AQUI) você tinha comentado esse container. Sem ele o menu fica “solto” e pode vazar --}}
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
 
             {{-- LOGO (opcional) --}}
             <a href="{{ route('home') }}"
             class="text-lg font-bold hover:text-yellow-300 flex items-center gap-2">
-                <img src="https://cdn-icons-png.flaticon.com/512/2830/2830308.png"
-                    class="w-7 h-7" alt="logo">
+                <img src="{{ asset('images/pwa-icon-180.png') }}"
+                    class="w-7 h-7 rounded" alt="">
                 Amigo Secreto
             </a>
 
             {{-- MENU --}}
-            <div class="flex items-center gap-6 text-sm font-semibold">
+            <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
 
+                @can('access-organizer')
                 {{-- Trocar grupo --}}
                 <div class="relative inline-block text-left">
                     <details class="group">
@@ -107,6 +108,16 @@
                     👥 Grupos
                 </a>
 
+                <form method="POST" action="{{ route('logout', absolute: false) }}">
+                    @csrf
+                    <button class="hover:underline">Sair</button>
+                </form>
+                @else
+                    <a href="{{ route('pwa.participant', absolute: false) }}" class="hover:underline">Meu Amigo Secreto</a>
+                    @unless(request()->routeIs('login'))
+                        <a href="{{ route('login', absolute: false) }}" class="hover:underline">Entrar como organizador</a>
+                    @endunless
+                @endcan
             </div>
         </div>
     </nav>

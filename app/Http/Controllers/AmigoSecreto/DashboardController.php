@@ -11,19 +11,9 @@ use App\Models\AmigoSecreto\AccessLog;
 
 class DashboardController extends Controller
 {
-    public function index($groupId = null)
+    public function index(Group $group)
     {
-        // Se não foi passado um ID, usa o primeiro grupo
-        if (!$groupId) {
-            $currentGroup = Group::first();
-
-            if (!$currentGroup) {
-                return redirect()->route('groups.create')
-                    ->with('warning', 'Crie um grupo para iniciar o Dashboard.');
-            }
-        } else {
-            $currentGroup = Group::findOrFail($groupId);
-        }
+        $currentGroup = $group;
 
         // === Cálculos do dashboard ===
         $participants = Participant::where('group_id', $currentGroup->id)->count();
@@ -97,6 +87,10 @@ class DashboardController extends Controller
 
     public function home(Request $request)
     {
+        if (!$request->user()?->is_organizer) {
+            return view('amigo-secreto.home');
+        }
+
         $year = Group::selectedYear($request->query('year'));
 
         return redirect()->route('dashboard.select', ['year' => $year]);
@@ -105,7 +99,7 @@ class DashboardController extends Controller
     public function selectGroup(Request $request)
     {
         $selectedYear = Group::selectedYear($request->query('year'));
-        $groups = Group::forYear($selectedYear)->withCount('participants')->orderBy('name')->get();
+        $groups = Group::createdBy($request->user())->forYear($selectedYear)->withCount('participants')->orderBy('name')->get();
 
         return view('amigo-secreto.dashboard.select-group', compact('groups', 'selectedYear'));
     }

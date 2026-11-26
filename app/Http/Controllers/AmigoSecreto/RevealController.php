@@ -20,6 +20,10 @@ class RevealController extends Controller
     // GET /reveal/{participant}
     public function showForm(Participant $participant, Request $request)
     {
+        if (!$this->hasLegacyEntry($request, $participant)) {
+            return redirect()->route('pwa.participant');
+        }
+
         // ATUALIZA ÚLTIMO ACESSO
         $participant->update([
             'last_access_at' => now()
@@ -28,7 +32,7 @@ class RevealController extends Controller
         // Busca o reveal
         $reveal = SecretReveal::where('participant_id', $participant->id)->first();
 
-        $autofillKey = $request->query('autofill_key', null);
+        $autofillKey = $participant->secret_key;
 
         // se já existe senha -> mostra tela de digitar senha
         if ($reveal) {
@@ -42,6 +46,8 @@ class RevealController extends Controller
     // POST /reveal/{participant}  (criar primeira senha)
     public function store(Request $request, Participant $participant)
     {
+        abort_unless($this->hasLegacyEntry($request, $participant), 403);
+
          $request->validate([
             'secret_key' => 'required|string',
             'password'   => 'required|min:4|max:10',
@@ -81,6 +87,8 @@ class RevealController extends Controller
     // POST /reveal/verify/{participant}  (validar senha existente)
     public function verify(Request $request, Participant $participant)
     {
+        abort_unless($this->hasLegacyEntry($request, $participant), 403);
+
         $request->validate(['password' => 'required']);
 
         AccessHelper::log($participant->id);
@@ -168,14 +176,26 @@ class RevealController extends Controller
     //     return view('amigo-secreto.participants.qr', compact('participant', 'qrBase64'));
     // }
 
-    public function showBySecretKey($key)
+    public function showBySecretKey(Request $request, string $key)
     {
         AccessHelper::log();
         $participant = Participant::where('secret_key', $key)->firstOrFail();
 
-        return redirect()->route('reveal.form', [
-            'participant' => $participant->id,
-            'autofill_key' => $key // 👈 Passa a chave automaticamente
+        abort_unless(hash_equals($participant->secret_key, $key), 404);
+        $request->session()->put('legacy_reveal_entry', [
+            'id' => $participant->id,
+            'hash' => hash('sha256', $key),
         ]);
+
+        return redirect()->route('reveal.form', $participant);
+    }
+
+    private function hasLegacyEntry(Request $request, Participant $participant): bool
+    {
+        $hash = $request->session()->get('legacy_reveal_entry.hash');
+
+        return $request->session()->get('legacy_reveal_entry.id') === $participant->id
+            && filled($participant->secret_key) && is_string($hash)
+            && hash_equals(hash('sha256', $participant->secret_key), $hash);
     }
 }

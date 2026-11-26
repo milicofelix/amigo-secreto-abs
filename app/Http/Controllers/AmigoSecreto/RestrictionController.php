@@ -6,14 +6,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AmigoSecreto\Group;
 use App\Models\AmigoSecreto\Restriction;
+use Illuminate\Validation\Rule;
 
 class RestrictionController extends Controller
 {
      public function store(Request $request, Group $group)
     {
+        $member = Rule::exists('participants', 'id')->where('group_id', $group->id);
         $validated = $request->validate([
-            'participant_id'   => 'required|exists:participants,id',
-            'cannot_draw_id'   => 'required|exists:participants,id|different:participant_id',
+            'participant_id' => ['required', 'integer', $member],
+            'cannot_draw_id' => ['required', 'integer', 'different:participant_id', $member],
         ]);
 
         Restriction::create([

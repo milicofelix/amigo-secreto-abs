@@ -6,6 +6,7 @@ use App\Jobs\SendDrawWebPush;
 use App\Models\AmigoSecreto\Group;
 use App\Models\AmigoSecreto\Participant;
 use App\Models\AmigoSecreto\ParticipantPushSubscription;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Minishlink\WebPush\MessageSentReport;
@@ -59,7 +60,9 @@ class AmigoSecretoPwaTest extends TestCase
         $this->assertDatabaseCount('participant_push_subscriptions', 1);
         $this->assertSame($participant->id, ParticipantPushSubscription::first()->participant_id);
 
-        $this->post(route('draw.store', $group))->assertRedirect();
+        $organizer = User::factory()->organizer()->create();
+        $group->user()->associate($organizer)->save();
+        $this->actingAs($organizer)->post(route('draw.store', $group))->assertRedirect();
         $draw = $group->draws()->sole();
         $this->assertDatabaseCount('assignments', 2);
         $this->assertSame('completed', $draw->status);

@@ -8,6 +8,7 @@ use App\Models\AmigoSecreto\Participant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -15,8 +16,6 @@ class ParticipantImportController extends Controller
 {
     public function create(Request $request, Group $group)
     {
-        $this->authorizeDestination($request, $group);
-
         $year = $group->eventYear() - 1;
         $sources = $this->sources($group)->withCount('participants')->orderBy('name')->get();
         $source = $request->filled('source')
@@ -34,7 +33,6 @@ class ParticipantImportController extends Controller
 
     public function store(Request $request, Group $group)
     {
-        $this->authorizeDestination($request, $group);
         $data = $request->validate([
             'source' => ['required', 'integer'],
             'participants' => ['required', 'array', 'min:1'],
@@ -43,9 +41,9 @@ class ParticipantImportController extends Controller
             'participants.required' => 'Selecione pelo menos um participante.',
         ]);
 
-        [$added, $skipped, $unreadableEmails] = DB::transaction(function () use ($request, $group, $data) {
+        [$added, $skipped, $unreadableEmails] = DB::transaction(function () use ($group, $data) {
             $destination = Group::lockForUpdate()->findOrFail($group->id);
-            $this->authorizeDestination($request, $destination);
+            Gate::authorize('manage', $destination);
 
             if ($destination->draws()->where('status', 'completed')->exists()) {
                 throw ValidationException::withMessages(['source' => 'Este grupo já realizou o sorteio.']);
@@ -101,11 +99,6 @@ class ParticipantImportController extends Controller
         }
 
         return $response;
-    }
-
-    private function authorizeDestination(Request $request, Group $group): void
-    {
-        abort_unless($group->user_id === $request->user()?->id, 403);
     }
 
     private function sources(Group $group): Builder

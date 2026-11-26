@@ -2,20 +2,21 @@
 
 namespace Tests\Feature;
 
-use App\Models\AmigoSecreto\Group;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\HasOrganizerGroups;
 use Tests\TestCase;
 
 class AmigoSecretoParticipantTest extends TestCase
 {
-    use RefreshDatabase;
+    use HasOrganizerGroups, RefreshDatabase;
 
     public function test_group_form_sends_and_saves_a_jpeg_photo(): void
     {
+        $this->signInOrganizer();
         Storage::fake('public');
-        $group = Group::create(['name' => 'Grupo de teste']);
+        $group = $this->ownedGroup(['name' => 'Grupo de teste']);
         $store = route('participants.store', $group);
 
         $this->get(route('groups.edit', $group))
@@ -34,7 +35,8 @@ class AmigoSecretoParticipantTest extends TestCase
 
     public function test_invalid_photo_keeps_the_other_fields_in_the_group_form(): void
     {
-        $group = Group::create(['name' => 'Grupo de teste']);
+        $this->signInOrganizer();
+        $group = $this->ownedGroup(['name' => 'Grupo de teste']);
         $edit = route('groups.edit', $group);
 
         $this->from($edit)->post(route('participants.store', $group), [

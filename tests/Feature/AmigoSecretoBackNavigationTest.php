@@ -2,19 +2,20 @@
 
 namespace Tests\Feature;
 
-use App\Models\AmigoSecreto\Group;
 use App\Models\Rifas\Rifa;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\HasOrganizerGroups;
 use Tests\TestCase;
 
 class AmigoSecretoBackNavigationTest extends TestCase
 {
-    use RefreshDatabase;
+    use HasOrganizerGroups, RefreshDatabase;
 
     public function test_back_links_always_point_to_their_parent_page(): void
     {
-        $group = Group::create(['name' => 'Grupo atual', 'event_date' => now()->addWeek()->toDateString()]);
-        $olderGroup = Group::create(['name' => 'Grupo anterior', 'event_date' => now()->subYear()->toDateString()]);
+        $this->signInOrganizer();
+        $group = $this->ownedGroup(['name' => 'Grupo atual', 'event_date' => now()->addWeek()->toDateString()]);
+        $olderGroup = $this->ownedGroup(['name' => 'Grupo anterior', 'event_date' => now()->subYear()->toDateString()]);
         $participant = $group->participants()->create(['name' => 'Participante', 'secret_key' => 'CODIGOTESTE']);
         $participant->reveal()->create(['password_hash' => 'teste', 'revealed_at' => now()]);
         $this->withSession(['legacy_reveal.participant_id' => $participant->id]);
