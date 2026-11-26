@@ -12,6 +12,7 @@
     <form method="POST" action="{{ route('participants.store', $group) }}" 
           enctype="multipart/form-data"
           class="bg-white shadow rounded p-5">
+        @csrf
         @include('amigo-secreto.participants._form', ['submitLabel' => 'Adicionar'])
     </form>
 

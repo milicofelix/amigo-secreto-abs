@@ -26,13 +26,7 @@ class ParticipantController extends Controller
 
     public function store(Request $request, Group $group)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'nullable|email|max:255',
-            'whatsapp'    => 'nullable|string',
-            'wishlist' => 'nullable|string',
-            'photo'    => 'nullable|image|max:2048',
-        ]);
+        $validated = $this->validateParticipant($request);
 
         // 🔐 Gera a chave secreta automaticamente
         $validated['secret_key'] = strtoupper(\Str::random(6));
@@ -53,21 +47,30 @@ class ParticipantController extends Controller
 
     public function update(Request $request, Group $group, Participant $participant)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'nullable|email|max:255',
-            'whatsapp'    => 'nullable|string',
-            'wishlist' => 'nullable|string',
-            'photo'    => 'nullable|image|max:2048',
-        ]);
+        $validated = $this->validateParticipant($request);
 
-         if ($request->hasFile('photo')) {
+        if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo')->store('participants', 'public');
         }
 
         $participant->update($validated);
 
         return redirect()->route('groups.edit', $group)->with('success', 'Participante atualizado!');
+    }
+
+    private function validateParticipant(Request $request): array
+    {
+        return $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'whatsapp' => 'nullable|string',
+            'wishlist' => 'nullable|string',
+            'photo' => 'nullable|bail|image|max:2048',
+        ], [
+            'photo.image' => 'Escolha novamente uma imagem válida em JPG, PNG, WebP, GIF ou BMP.',
+            'photo.max' => 'A foto deve ter até 2 MB. Escolha uma imagem menor.',
+            'photo.uploaded' => 'Não foi possível receber a foto. Selecione novamente uma imagem de até 2 MB.',
+        ]);
     }
 
     public function destroy(Group $group, Participant $participant)

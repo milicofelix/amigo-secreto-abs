@@ -4,6 +4,7 @@ use App\Http\Controllers\AmigoSecreto\AsDrawController;
 use App\Http\Controllers\AmigoSecreto\DashboardController;
 use App\Http\Controllers\AmigoSecreto\GroupController;
 use App\Http\Controllers\AmigoSecreto\ParticipantController;
+use App\Http\Controllers\AmigoSecreto\ParticipantImportController;
 use App\Http\Controllers\AmigoSecreto\ParticipantPwaController;
 use App\Http\Controllers\AmigoSecreto\ParticipantStatusController;
 use App\Http\Controllers\AmigoSecreto\RestrictionController;
@@ -16,6 +17,8 @@ Route::get('/', [DashboardController::class, 'home'])->name('home');
 Route::resource('groups', GroupController::class);
 
 Route::prefix('groups/{group}')->group(function () {
+    Route::get('participants/import', [ParticipantImportController::class, 'create'])->name('participants.import');
+    Route::post('participants/import', [ParticipantImportController::class, 'store'])->name('participants.import.store');
     Route::resource('participants', ParticipantController::class)->except(['index', 'show']);
     Route::get('participants/{id}/qr', [ParticipantController::class, 'accessByKey'])->name('participants.qr');
     Route::post('restrictions', [RestrictionController::class, 'store'])->name('restrictions.store');

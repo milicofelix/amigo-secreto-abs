@@ -80,6 +80,13 @@ class AsDrawController extends Controller
                 return back()->with('error', 'Este grupo já realizou o sorteio.');
             }
 
+            $currentParticipantIds = $group->participants()->pluck('id')->all();
+            if (count($currentParticipantIds) !== count($result) || array_diff($currentParticipantIds, array_keys($result))) {
+                DB::rollBack();
+
+                return back()->with('error', 'A lista de participantes mudou. Tente realizar o sorteio novamente.');
+            }
+
             $draw = AsDraw::create([
                 'group_id' => $group->id,
                 'drawn_at' => now(),

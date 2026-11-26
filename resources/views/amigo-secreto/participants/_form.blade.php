@@ -14,8 +14,9 @@
 {{-- Foto do participante --}}
 <div class="mb-4">
     <label class="block font-semibold mb-1">Foto (opcional)</label>
-    <input type="file" name="photo" accept="image/*"
+    <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp"
            class="w-full border rounded p-2">
+    <p class="text-sm text-gray-600 mt-1">JPG, PNG, WebP, GIF ou BMP, até 2 MB.</p>
 
     @if(isset($participant) && $participant->photo)
         <img src="{{ asset('storage/'.$participant->photo) }}"

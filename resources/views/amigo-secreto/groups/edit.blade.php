@@ -1,6 +1,7 @@
 @extends('layouts.amigo-secreto')
 
 @section('content')
+@php($hasCompletedDraw = $group->draws()->where('status', 'completed')->exists())
 <div class="max-w-6xl mx-auto mt-8 px-4">
 
     <h1 class="text-2xl md:text-3xl font-bold mb-4 text-black">
@@ -17,44 +18,54 @@
 
     {{-- Participantes --}}
     <div class="bg-white p-4 shadow rounded mb-6">
-        <h2 class="text-xl font-semibold mb-3">👥 Participantes</h2>
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-xl font-semibold">👥 Participantes</h2>
+            @if ($group->user_id === auth()->id() && !$hasCompletedDraw)
+                <a href="{{ route('participants.import', $group) }}"
+                   class="rounded border border-indigo-600 px-3 py-2 font-semibold text-indigo-700 hover:bg-indigo-50">
+                    Importar do ano anterior
+                </a>
+            @endif
+        </div>
 
         <form method="POST"
               action="{{ route('participants.store', $group) }}"
+              enctype="multipart/form-data"
               class="flex flex-col md:flex-row md:flex-wrap gap-2 mb-4">
 
             @csrf
 
-            <input type="text" name="name" placeholder="Nome" required
+            <input type="text" name="name" value="{{ old('name') }}" placeholder="Nome" required
                 class="border p-2 rounded w-full md:w-[32%]">
             {{-- Foto do participante --}}
             <div class="mb-4">
                 <label class="block font-semibold mb-1">Foto (opcional)</label>
-                <input type="file" name="photo" accept="image/*"
+                <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp"
                     class="w-full border rounded p-2">
-
-                @if(isset($participant) && $participant->photo)
-                    <img src="{{ asset('storage/'.$participant->photo) }}"
-                        class="w-20 h-20 rounded-full mt-2 border shadow">
-                @endif
+                <p class="text-sm text-gray-600 mt-1">JPG, PNG, WebP, GIF ou BMP, até 2 MB.</p>
 
                 @error('photo')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
-            <input type="text" name="whatsapp" placeholder="WhatsApp"
+            <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" placeholder="WhatsApp"
                 class="border p-2 rounded w-full md:w-[32%]">
 
-            <input type="email" name="email" placeholder="E-mail"
+            <input type="email" name="email" value="{{ old('email') }}" placeholder="E-mail"
                 class="border p-2 rounded w-full md:w-[32%]">
 
-            <input type="text" name="wishlist" placeholder="Desejos (opcional)"
+            <input type="text" name="wishlist" value="{{ old('wishlist') }}" placeholder="Desejos (opcional)"
                 class="border p-2 rounded w-full md:w-[32%]">
 
             <button class="bg-green-600 text-white px-4 py-2 rounded w-full md:w-auto">
                 + Adicionar
             </button>
+            @foreach (['name', 'email', 'whatsapp', 'wishlist'] as $field)
+                @error($field)
+                    <p class="w-full text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            @endforeach
         </form>
 
 
@@ -163,7 +174,7 @@
                 Sortear Amigo Secreto
             </button>
 
-            @if($group->draws()->where('status', 'completed')->exists())
+            @if($hasCompletedDraw)
                 <div class="mt-4">
                     <a href="{{ route('draw.show', ['group' => $group->id]) }}"
                        class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition">
