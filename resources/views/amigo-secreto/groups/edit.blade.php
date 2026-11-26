@@ -82,7 +82,6 @@
                         <th class="p-2 border">Nome</th>
                         <th class="p-2 border">E-mail</th>
                         <th class="p-2 border">WhatsApp</th>
-                        <th class="p-2 border">Desejos</th>
                         <th class="p-2 border w-24 text-center">Ações</th>
                     </tr>
                 </thead>
@@ -90,13 +89,14 @@
                 @foreach($group->participants as $p)
                     <tr>
                         <td class="p-2 border">{{ $p->name }}</td>
-                        <td class="p-2 border">{{ $p->email }}</td>
+                        <td class="p-2 border">{{ $p->masked_email }}</td>
                         <td class="p-2 border">
-                            {{ $p->whatsapp ?? (filled($p->getRawOriginal('whatsapp')) ? 'Número indisponível' : '—') }}
+                            {{ $p->whatsapp ? $p->masked_whatsapp : (filled($p->getRawOriginal('whatsapp')) ? 'Número indisponível' : '—') }}
                         </td>
-                        <td class="p-2 border">{{ $p->wishlist }}</td>
                         <td class="p-2 border text-center">
-                            <div class="flex justify-center gap-2">
+                            <div class="flex flex-wrap justify-center gap-2">
+                                <a href="{{ route('participants.qr', [$group, $p], absolute: false) }}"
+                                   class="rounded bg-indigo-600 px-2 py-1 text-white">Convite</a>
                                 <a href="{{ route('participants.edit', [$group, $p]) }}"
                                 class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded">✏️</a>
 

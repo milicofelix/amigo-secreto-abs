@@ -23,9 +23,9 @@ class AmigoSecretoOrganizerAccessTest extends TestCase
         $this->get(route('groups.edit', $legacy))->assertRedirect(route('login'));
         $this->postJson(route('draw.store', $legacy))->assertUnauthorized();
         $this->get(route('reveal.form', $participant))->assertRedirect(route('pwa.participant'));
-        $this->post(route('reveal.verify', $participant), ['password' => 'teste'])->assertForbidden();
-        $this->get(route('reveal.by.key', $participant->secret_key))->assertRedirect(route('reveal.form', $participant));
-        $this->get(route('reveal.form', $participant))->assertOk();
+        $this->post('/reveal/verify/'.$participant->id, ['password' => 'teste'])->assertNotFound();
+        $this->get(route('reveal.by.key', $participant->secret_key))->assertRedirect(route('pwa.participant'));
+        $this->get(route('pwa.participant'))->assertOk()->assertDontSee($participant->name);
     }
 
     public function test_organizers_see_and_manage_only_groups_they_created(): void
@@ -68,7 +68,7 @@ class AmigoSecretoOrganizerAccessTest extends TestCase
         $this->get(route('participants.edit', [$first, $other]))->assertNotFound();
         $this->put(route('participants.update', [$first, $other]), ['name' => 'Alterado'])->assertNotFound();
         $this->delete(route('participants.destroy', [$first, $other]))->assertNotFound();
-        $this->get(route('participants.qr', ['group' => $first, 'id' => $other->id]))->assertNotFound();
+        $this->get(route('participants.qr', ['group' => $first, 'participant' => $other->id]))->assertNotFound();
         $this->delete(route('restrictions.destroy', [$first, $restriction]))->assertNotFound();
         $this->postJson(route('restrictions.store', $first), [
             'participant_id' => $own->id, 'cannot_draw_id' => $other->id,

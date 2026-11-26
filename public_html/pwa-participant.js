@@ -1,8 +1,30 @@
 (() => {
     const panel = document.getElementById('pwa-participant');
-    if (!panel) return;
+    function showInviteFromLink() {
+        const fragment = new URLSearchParams(location.hash.slice(1));
+        if (!fragment.has('convite')) return false;
 
-    const { participant, csrf, statusUrl, pushUrl, pushKey } = panel.dataset;
+
+        history.replaceState(history.state, '', location.pathname + location.search);
+        document.getElementById('participant-entry').hidden = false;
+        const session = document.getElementById('participant-session');
+        if (session) session.hidden = true;
+
+        const input = document.getElementById('participant-code');
+        const code = fragment.get('convite');
+        if (input && /^[A-Za-z0-9]{24}$/.test(code)) {
+            input.value = code;
+        }
+        return true;
+    }
+
+    window.addEventListener('hashchange', showInviteFromLink);
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) location.reload();
+    });
+    if (showInviteFromLink() || !panel) return;
+
+    const { participant, csrf, inviteScope, statusUrl, pushUrl, pushKey } = panel.dataset;
     const request = (url, method, data) => fetch(url, {
         method,
         credentials: 'same-origin',
@@ -83,6 +105,12 @@
                     status.textContent = 'Sincronizado.';
                     return;
                 }
+                if (pending.inviteScope !== inviteScope) {
+                    await clear();
+                    gift.disabled = false;
+                    status.textContent = 'O acesso mudou. Marque o presente novamente se ainda for necessário.';
+                    return;
+                }
                 if (Date.now() - pending.createdAt > retention) {
                     await clear();
                     gift.disabled = false;
@@ -130,7 +158,7 @@
         gift.addEventListener('click', async () => {
             gift.disabled = true;
             try {
-                await put({ createdAt: Date.now() });
+                await put({ createdAt: Date.now(), inviteScope });
                 await sync();
             } catch {
                 gift.disabled = false;

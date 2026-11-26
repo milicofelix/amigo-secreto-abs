@@ -3,40 +3,28 @@
 namespace App\Console\Commands;
 
 use App\Models\AmigoSecreto\Participant;
-use App\Models\AmigoSecreto\ParticipantPushSubscription;
+use App\Services\ParticipantInvitation;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class IssueParticipantPwaCode extends Command
 {
-    protected $signature = 'amigo-secreto:codigo-pwa {participant : ID do participante} {--rotate : Revoga o código e as inscrições anteriores}';
+    protected $signature = 'amigo-secreto:codigo-pwa {participant : ID do participante} {--rotate : Substitui o convite anterior}';
 
-    protected $description = 'Gera um código privado de acesso ao PWA para um participante';
+    protected $description = 'Gera um código privado de acesso ao portal para um participante';
 
-    public function handle(): int
+    public function handle(ParticipantInvitation $invitations): int
     {
-        $code = DB::transaction(function () {
-            $participant = Participant::lockForUpdate()->find($this->argument('participant'));
-            if (!$participant || ($participant->pwa_access_hash && !$this->option('rotate'))) {
-                return null;
-            }
-
-            $code = Str::random(24);
-            $participant->forceFill(['pwa_access_hash' => hash('sha256', $code)])->save();
-            ParticipantPushSubscription::where('participant_id', $participant->id)->delete();
-
-            return $code;
-        });
+        $participant = Participant::find($this->argument('participant'));
+        $code = $participant ? $invitations->issue($participant, $this->option('rotate')) : null;
 
         if (!$code) {
-            $this->error('Participante inexistente ou código já emitido. Use --rotate apenas para revogar o acesso anterior.');
+            $this->error('Participante inexistente ou convite ativo. Use --rotate para substituir um convite ativo.');
 
             return self::FAILURE;
         }
 
         $this->line($code);
-        $this->info('Entregue este código em particular ao participante. Ele é exibido apenas agora.');
+        $this->info('Entregue este código em particular ao participante. Ele é exibido apenas agora e vale por 30 dias.');
 
         return self::SUCCESS;
     }

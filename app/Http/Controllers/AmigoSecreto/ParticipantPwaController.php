@@ -16,24 +16,34 @@ class ParticipantPwaController extends Controller
     {
         $participant = $request->attributes->get('pwa.participant');
         $assignment = $participant?->givenAssignments()
-            ->whereHas('draw', fn ($query) => $query->where('status', 'completed'))
-            ->with('receiver')->latest('id')->first();
+            ->whereHas('draw', fn ($query) => $query->where('status', 'completed')->where('group_id', $participant->group_id))
+            ->with(['receiver' => fn ($query) => $query->select('id', 'name', 'wishlist')->where('group_id', $participant->group_id)])
+            ->latest('id')->first();
+
+        if ($assignment?->receiver && !$participant->first_revealed_at) {
+            $participant->newQuery()->withActiveInvite()->whereKey($participant->id)
+                ->where('pwa_access_hash', $participant->pwa_access_hash)->whereNull('first_revealed_at')
+                ->update(['first_revealed_at' => now()]);
+        }
 
         return view('amigo-secreto.pwa.participant', compact('participant', 'assignment'));
     }
 
     public function verify(Request $request)
     {
-        $data = $request->validate(['code' => ['required', 'string', 'size:24']], [
-            'code.required' => 'Informe seu código privado.',
-            'code.size' => 'Código privado inválido.',
-        ]);
+        $data = $request->validate(
+            ['code' => ['required', 'string', 'size:24']],
+            ['code.required' => 'Informe seu código privado.', 'code.size' => 'Código privado inválido.'],
+        );
         $hash = hash('sha256', $data['code']);
-        $participant = Participant::where('pwa_access_hash', $hash)->first();
+        $participant = Participant::withActiveInvite()->where('pwa_access_hash', $hash)->first();
 
         if (!$participant) {
-            throw ValidationException::withMessages(['code' => 'Código privado inválido.']);
+            throw ValidationException::withMessages(['code' => 'Convite inválido, revogado ou vencido. Peça um novo ao organizador.']);
         }
+
+        Participant::withActiveInvite()->whereKey($participant->id)->where('pwa_access_hash', $hash)
+            ->update(['last_access_at' => now()]);
 
         $request->session()->regenerate(true);
         $request->session()->put('pwa_participant', ['id' => $participant->id, 'hash' => $hash]);
@@ -47,6 +57,19 @@ class ParticipantPwaController extends Controller
         $request->session()->regenerate(true);
 
         return redirect()->route('pwa.participant');
+    }
+
+    public function emailPreference(Request $request)
+    {
+        $participant = $request->attributes->get('pwa.participant');
+        abort_unless($participant, 401);
+        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+
+        $participant->newQuery()->withActiveInvite()->whereKey($participant->id)
+            ->where('pwa_access_hash', $participant->pwa_access_hash)
+            ->update(['draw_email_enabled' => (bool) $data['enabled']]);
+
+        return redirect()->route('pwa.participant')->with('notification_status', 'Preferência de e-mail atualizada.');
     }
 
     public function subscribe(Request $request)
@@ -74,7 +97,7 @@ class ParticipantPwaController extends Controller
 
         DB::transaction(function () use ($participant, $subscription) {
             $currentParticipant = Participant::lockForUpdate()->find($participant->id);
-            abort_unless($currentParticipant?->pwa_access_hash === $participant->pwa_access_hash, 401);
+            abort_unless($currentParticipant?->hasActiveInvite() && $currentParticipant->pwa_access_hash === $participant->pwa_access_hash, 401);
             $record = ParticipantPushSubscription::firstOrCreate(
                 ['endpoint_hash' => hash('sha256', $subscription['endpoint'])],
                 ['participant_id' => $participant->id, 'subscription' => $subscription],
@@ -92,8 +115,12 @@ class ParticipantPwaController extends Controller
         abort_unless($participant, 401);
         $data = $request->validate(['endpoint' => ['required', 'string', 'max:2048']]);
 
-        ParticipantPushSubscription::where('participant_id', $participant->id)
-            ->where('endpoint_hash', hash('sha256', $data['endpoint']))->delete();
+        DB::transaction(function () use ($participant, $data) {
+            $current = Participant::lockForUpdate()->find($participant->id);
+            abort_unless($current?->hasActiveInvite() && $current->pwa_access_hash === $participant->pwa_access_hash, 401);
+            ParticipantPushSubscription::where('participant_id', $participant->id)
+                ->where('endpoint_hash', hash('sha256', $data['endpoint']))->delete();
+        });
 
         return response()->noContent();
     }

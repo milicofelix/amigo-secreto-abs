@@ -17,8 +17,6 @@ class AmigoSecretoBackNavigationTest extends TestCase
         $group = $this->ownedGroup(['name' => 'Grupo atual', 'event_date' => now()->addWeek()->toDateString()]);
         $olderGroup = $this->ownedGroup(['name' => 'Grupo anterior', 'event_date' => now()->subYear()->toDateString()]);
         $participant = $group->participants()->create(['name' => 'Participante', 'secret_key' => 'CODIGOTESTE']);
-        $participant->reveal()->create(['password_hash' => 'teste', 'revealed_at' => now()]);
-        $this->withSession(['legacy_reveal.participant_id' => $participant->id]);
 
         $dashboard = route('amigo.dashboard', $group, absolute: false);
         $groups = route('groups.index', ['year' => $group->eventYear()], absolute: false);
@@ -27,9 +25,8 @@ class AmigoSecretoBackNavigationTest extends TestCase
 
         $pages = [
             [route('reveal.list', $group), $dashboard],
-            [route('participants.qr', ['group' => $group, 'id' => $participant->id]), $draw],
+            [route('participants.qr', ['group' => $group, 'participant' => $participant->id]), route('groups.edit', $group, absolute: false)],
             [route('dashboard.start-draw', $group), $dashboard],
-            [route('reveal.result', $participant), $groups],
             [$draw, $groups],
             [route('participants.import', $group), route('groups.edit', $group, absolute: false)],
             [route('dashboard.revealed-friends', $olderGroup), route('amigo.dashboard', $olderGroup, absolute: false)],

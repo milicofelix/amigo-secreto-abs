@@ -108,6 +108,13 @@
                     👥 Grupos
                 </a>
 
+                @can('access-super-admin')
+                    <a href="{{ route('super-admin.groups', absolute: false) }}"
+                       class="hover:text-yellow-300 {{ request()->routeIs('super-admin.groups') ? 'underline text-yellow-300' : '' }}">
+                        Painel Super Admin
+                    </a>
+                @endcan
+
                 <form method="POST" action="{{ route('logout', absolute: false) }}">
                     @csrf
                     <button class="hover:underline">Sair</button>

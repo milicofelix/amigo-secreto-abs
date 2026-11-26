@@ -67,9 +67,9 @@
     @else
         @foreach($revealed as $item)
             <div class="reveal-item">
-                <strong>{{ $item->participant->name }}</strong> já sabe quem tirou no Amigo Secreto! 🎁
+                <strong>{{ $item->name }}</strong> já sabe quem tirou no Amigo Secreto! 🎁
                 <div class="reveal-date">
-                    📅 Revelado em: <strong>{{ $item->revealed_at->format('d/m/Y H:i') }}</strong>
+                    📅 Revelado em: <strong>{{ $item->first_revealed_at->format('d/m/Y H:i') }}</strong>
                 </div>
             </div>
         @endforeach

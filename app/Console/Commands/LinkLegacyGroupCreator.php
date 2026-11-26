@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\AmigoSecreto\Group;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class LinkLegacyGroupCreator extends Command
@@ -29,8 +30,23 @@ class LinkLegacyGroupCreator extends Command
             return self::FAILURE;
         }
 
-        $updated = Group::whereKey($this->argument('group'))->whereNull('user_id')
-            ->update(['user_id' => $creator->id]);
+        $updated = DB::transaction(function () use ($creator) {
+            $group = Group::whereKey($this->argument('group'))->whereNull('user_id')->lockForUpdate()->first();
+            if (!$group) {
+                return false;
+            }
+
+            $group->user()->associate($creator)->save();
+            DB::table('group_creator_confirmations')->insert([
+                'group_id' => $group->id,
+                'creator_id' => $creator->id,
+                'group_name' => $group->name,
+                'creator_name' => $creator->name,
+                'confirmed_at' => now(),
+            ]);
+
+            return true;
+        });
 
         if (!$updated) {
             $this->error('Grupo inexistente ou já vinculado.');

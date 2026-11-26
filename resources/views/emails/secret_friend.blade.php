@@ -1,26 +1,9 @@
-@component('mail::message')
-# 🎉 Olá, {{ $giver->name }}!
+<x-mail::message>
+# O sorteio foi realizado
 
-O sorteio do grupo **{{ $group->name }}** foi realizado com sucesso.  
-E o seu amigo secreto é...
+Abra o portal Meu Amigo Secreto para consultar seu resultado com o convite que você recebeu do organizador.
 
-@component('mail::panel')
-## 🎁 {{ $receiver->name }}
-@endcomponent
-
-@if($receiver->wishlist)
-**Dica de presente:**  
-{{ $receiver->wishlist }}
-@endif
-
-@isset($group->event_date)
-📅 **Data do evento:** {{ \Carbon\Carbon::parse($group->event_date)->format('d/m/Y') }}  
-@endisset
-
-@isset($group->event_location)
-📍 **Local:** {{ $group->event_location }}
-@endisset
-
-Boas compras e um ótimo evento! 😄
-
-@endcomponent
+<x-mail::button :url="route('pwa.participant')">
+Abrir Meu Amigo Secreto
+</x-mail::button>
+</x-mail::message>

@@ -1,47 +1,56 @@
-@extends('layouts.amigo-secreto')
+@extends('layouts.amigo-secreto-private')
+
+@section('title', 'Convite do participante')
 
 @section('content')
-<div id="qrCard" class="max-w-sm mx-auto mt-10 p-6 bg-gradient-to-br from-indigo-300 to-indigo-50 rounded-2xl shadow-2xl text-center border border-indigo-400 relative">
+<section class="card">
+    <h1>Convite de {{ $participant->name }}</h1>
+    <p>{{ $group->name }}</p>
 
-    {{-- FOTO / AVATAR --}}
-    <div class="w-24 h-24 mx-auto rounded-full border-4 border-white shadow bg-white flex items-center justify-center text-5xl">
-        @if(filter_var($photo, FILTER_VALIDATE_URL))
-            <img src="{{ $photo }}" class="w-full h-full rounded-full object-cover">
-        @else
-            <span>{{ $photo }}</span>
+    @if (session('invite_status'))
+        <p class="notice" role="status">{{ session('invite_status') }}</p>
+    @endif
+
+    @if ($participant->hasActiveInvite())
+        <p>Convite ativo até <time datetime="{{ $participant->invite_expires_at->toIso8601String() }}">{{ $participant->invite_expires_at->format('d/m/Y H:i') }}</time>.</p>
+    @elseif ($participant->invite_expires_at)
+        <p>Convite vencido.</p>
+    @else
+        <p>Sem convite ativo.</p>
+    @endif
+
+    @isset($qr)
+        <div class="section">
+            <p>Envie o link, o QR ou o código somente para {{ $participant->name }}. Eles são exibidos apenas nesta emissão.</p>
+            <label for="invite-link">Link privado</label>
+            <input id="invite-link" type="text" readonly value="{{ $url }}" spellcheck="false">
+            <label for="invite-code">Código para digitar no portal</label>
+            <input id="invite-code" type="text" readonly value="{{ $code }}" spellcheck="false">
+            <img class="qr" src="{{ $qr }}" alt="QR do convite">
+            <a class="button secondary" href="{{ $qr }}" download="convite-amigo-secreto.png">Baixar QR</a>
+        </div>
+    @endisset
+
+    @if ($participant->hasActiveInvite())
+        <p class="notice">Substituir ou revogar o convite encerra o acesso concedido pelo código anterior.</p>
+    @endif
+
+    <div class="actions">
+        <form method="POST" action="{{ route('participants.invite.store', [$group, $participant], absolute: false) }}"
+              @if($participant->hasActiveInvite()) onsubmit="return confirm('Substituir este convite e encerrar o acesso anterior?')" @endif>
+            @csrf
+            <button>{{ $participant->hasActiveInvite() ? 'Substituir convite' : 'Gerar convite' }}</button>
+        </form>
+        @if ($participant->hasActiveInvite())
+            <form method="POST" action="{{ route('participants.invite.destroy', [$group, $participant], absolute: false) }}"
+                  onsubmit="return confirm('Revogar o acesso deste participante?')">
+                @csrf
+                @method('DELETE')
+                <button class="danger">Revogar convite</button>
+            </form>
         @endif
     </div>
 
-    <h2 class="text-2xl font-extrabold text-indigo-900 mt-3">{{ $participant->name }}</h2>
-    <p class="text-sm text-gray-600">🎁 {{ $group->name }}</p>
-
-    <div class="bg-white border rounded-xl shadow-xl p-4 mx-auto mt-5 w-fit">
-        <img src="data:image/png;base64,{{ $qrBase64 }}" class="w-56 mx-auto rounded-md">
-    </div>
-
-    <p class="mt-3 text-xs text-gray-500">🔒 Uso exclusivo — Não compartilhe!</p>
-
-    <button id="downloadQR"
-        class="mt-6 px-5 py-2 bg-indigo-600 text-white rounded-lg font-semibold shadow hover:bg-indigo-700 transition">
-        💾 Salvar como imagem
-    </button>
-
-    <a href="{{ route('draw.show', $group, absolute: false) }}"
-       class="block mt-3 text-indigo-500 hover:text-indigo-700 font-semibold text-sm">
-        ← Voltar ao sorteio
-    </a>
-</div>
-
-{{-- SCRIPT DOWNLOAD --}}
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-<script>
-document.getElementById('downloadQR').addEventListener('click', function () {
-    html2canvas(document.querySelector("#qrCard")).then(canvas => {
-        const a = document.createElement("a");
-        a.href = canvas.toDataURL("image/png");
-        a.download = "QR_{{ $participant->name }}.png";
-        a.click();
-    });
-});
-</script>
+    <a href="{{ route('groups.edit', $group, absolute: false) }}">← Voltar ao grupo</a>
+</section>
 @endsection

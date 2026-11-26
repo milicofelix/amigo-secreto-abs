@@ -45,6 +45,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_organizer' => 'boolean',
+            'is_super_admin' => 'boolean',
         ];
     }
 

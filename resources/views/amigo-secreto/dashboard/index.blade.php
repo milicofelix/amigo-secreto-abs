@@ -94,10 +94,10 @@
                 @foreach($latestReveals as $item)
                     <div class="flex justify-between bg-indigo-50 p-3 rounded-lg mb-2">
                         <span class="font-semibold text-indigo-800">
-                            {{ $item->participant->name }}
+                            {{ $item->name }}
                         </span>
                         <span class="text-gray-700 text-sm">
-                            📅 {{ $item->revealed_at->format('d/m H:i') }}
+                            📅 {{ $item->first_revealed_at->format('d/m H:i') }}
                         </span>
                     </div>
                 @endforeach

@@ -3,17 +3,14 @@
 namespace App\Http\Controllers\AmigoSecreto;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\AmigoSecreto\Group;
 use App\Models\AmigoSecreto\AsDraw;
 use App\Models\AmigoSecreto\Assignment;
 use App\Models\AmigoSecreto\Restriction;
 use Illuminate\Support\Facades\DB;
 use App\Mail\SecretFriendNotification;
-use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendWhatsAppMessageJob;
 use App\Jobs\SendDrawWebPush;
 use App\Models\AmigoSecreto\Participant;
 
@@ -94,38 +91,13 @@ class AsDrawController extends Controller
             ]);
 
             foreach ($result as $giver => $receiver) {
-                $assignment = Assignment::create([
+                Assignment::create([
                     'draw_id'     => $draw->id,
                     'giver_id'    => $giver,
                     'receiver_id' => $receiver,
                 ]);
 
-                $giverModel = $assignment->giver;
-                $receiverModel = $assignment->receiver;
-
-                if ($giverModel && $giverModel->email) {
-                    try {
-                            Mail::to($giverModel->email)
-                                ->queue((new SecretFriendNotification($giverModel, $receiverModel, $group))
-                                ->onQueue('emails'));
-
-                        } catch (\Throwable $e) {
-                            Log::warning('[MAIL] Falha ao enviar e-mail para ' . $giverModel->email . ': ' . $e->getMessage());
-                        }
-                }
-                // 💬 Monta mensagem para WhatsApp
-                // if ($giverModel && $giverModel->whatsapp) {
-                //     $msg = "🎁 Olá {$giverModel->name}! O sorteio do grupo *{$group->name}* foi realizado!\n"
-                //         . "Você tirou 👉 *{$receiverModel->name}*.\n\n"
-                //         . "🎯 Lista de desejos: {$receiverModel->wishlist}\n"
-                //         . "Boa sorte e Feliz Amigo Secreto! 🎉";
-
-                //     // ⏳ Enfileira envio (com atraso para evitar flood)
-                //     dispatch(new SendWhatsAppMessageJob($giverModel->whatsapp, $msg))
-                //         ->delay(now()->addSeconds(2));
-                // }
             }
-
 
             DB::commit();
 
@@ -134,6 +106,21 @@ class AsDrawController extends Controller
             Log::error('Erro ao realizar sorteio: ' . $e->getMessage());
 
             return back()->with('error', 'Ocorreu um erro inesperado ao realizar o sorteio. Tente novamente.');
+        }
+
+        $recipients = $group->participants()->whereKey(array_keys($result))
+            ->where('draw_email_enabled', true)->whereNotNull('email')->get(['id', 'email']);
+
+        foreach ($recipients as $recipient) {
+            if (!filter_var($recipient->email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+
+            try {
+                Mail::to($recipient->email)->queue((new SecretFriendNotification)->onQueue('emails'));
+            } catch (\Throwable) {
+                Log::warning('Não foi possível enfileirar o aviso de sorteio por e-mail.', ['draw_id' => $draw->id]);
+            }
         }
 
         if (SendDrawWebPush::enabled()) {
@@ -154,7 +141,7 @@ class AsDrawController extends Controller
         $draw = $group->draws()
             ->where('status', 'completed')
             ->latest()
-            ->with('assignments.giver', 'assignments.receiver')
+            ->with('assignments.giver:id,name,gender,first_revealed_at,shared_gift_idea,bought_gift')
             ->first();
 
         if ($draw && $group->eventIsOver()) {

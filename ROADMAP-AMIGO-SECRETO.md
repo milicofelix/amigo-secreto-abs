@@ -46,27 +46,39 @@ Commit sugerido — `git c "feat: protege a gestão de grupos com login e permis
 
 ## Fase 2 Super Admin e visão global
 
-- [ ] Criar o papel **Super Admin** com atribuição restrita e painel separado. Restringir as páginas e consultas globais a esse papel.
-- [ ] Listar todos os grupos com filtros por ano, criador e situação do sorteio. Identificar grupos antigos sem vínculo e registrar a confirmação de criadores no histórico administrativo.
-- [ ] Mostrar na visão global informações de gestão, como quantidade de participantes e situação do sorteio. Manter contatos, convites e pares sujeitos às permissões específicas.
+- [x] Criar o papel **Super Admin** com atribuição restrita e painel separado. Restringir as páginas e consultas globais a esse papel.
+- [x] Listar todos os grupos com filtros por ano, criador e situação do sorteio. Identificar grupos antigos sem vínculo e registrar a confirmação de criadores no histórico administrativo.
+- [x] Mostrar na visão global informações de gestão, como quantidade de participantes e situação do sorteio. Manter contatos, convites e pares sujeitos às permissões específicas.
+
+### Habilitar o Super Admin
+
+Execute `docker compose exec app php artisan amigo-secreto:super-admin SEU_EMAIL` para conceder a permissão a uma conta de organizador habilitada. Acrescente `--revoke` para revogar a permissão.
+
+O histórico registra as confirmações feitas pelo comando `amigo-secreto:vincular-grupo` a partir desta fase.
 
 ### Teste manual no navegador
 
-1. Entre como Super Admin e confira os grupos das duas contas e de anos diferentes. Use os filtros e confira se um grupo sem vínculo aparece identificado.
-2. Entre como Organizador e tente abrir o painel global. A aplicação deve recusar o acesso e manter a lista restrita aos grupos criados pela conta.
+1. Entre como Super Admin e abra `http://localhost:8085/super-admin/grupos`. Confira os grupos das duas contas e de anos diferentes. Combine os filtros e selecione **Sem criador vinculado** para localizar os grupos antigos sem responsável.
+2. Em outra sessão, entre como Organizador e tente abrir o painel global. A aplicação deve responder com 403. Em **Meus grupos**, a conta deve ver somente os grupos que criou.
+3. Em um banco de teste, vincule um grupo antigo pelo terminal. Recarregue o painel global e confira se a confirmação aparece no histórico.
 
 Commit sugerido — `git c "feat: adiciona painel global do super admin"`
 
 ## Fase 3 Convites e privacidade
 
-- [ ] Unificar o acesso individual em **Meu Amigo Secreto**, com convites revogáveis e prazo de validade. Entregar o QR ou link individual de forma privada.
-- [ ] Restringir contatos, fotos, listas de desejos e registros de acesso às telas e aos papéis que precisam desses dados.
-- [ ] Usar avisos genéricos por e-mail e push, com link para o portal. Preservar as preferências de notificações do participante.
+- [x] Unificar o acesso individual em **Meu Amigo Secreto**, com convites revogáveis e prazo de validade. Entregar o QR ou link individual de forma privada.
+- [x] Restringir contatos, fotos, listas de desejos e registros de acesso às telas e aos papéis que precisam desses dados.
+- [x] Usar avisos genéricos por e-mail e push, com link para o portal. Preservar as preferências de notificações do participante.
+
+Em **Grupos → Editar → Participantes → Convite**, o criador pode gerar, substituir ou revogar um convite. O link, o QR e o código são exibidos na emissão e valem por 30 dias. Entregue-os diretamente ao participante. Substituir ou revogar invalida as sessões vinculadas ao código anterior.
+
+QRs do fluxo antigo passam a orientar a solicitar um novo convite. Códigos privados do PWA já emitidos ganham 30 dias de validade a partir da migração. O participante pode escolher se recebe avisos por e-mail. As inscrições de push ficam associadas à preferência por dispositivo.
 
 ### Teste manual no navegador
 
-1. Em uma janela separada, abra um convite válido e confirme que o acesso fica vinculado ao participante correto. Após o sorteio, confira que ele vê somente seu próprio par.
-2. Revogue o convite e repita o acesso. O portal deve recusar o convite e orientar a pessoa a falar com o organizador.
+1. Como organizador, gere um convite em **Grupos → Editar → Participantes → Convite**. Em uma janela anônima, abra o link ou escaneie o QR, toque em **Entrar** e confira o nome do participante. Antes do sorteio, o portal deve mostrar o estado de espera. Após o sorteio, ele deve mostrar somente o par dessa pessoa e a sugestão de presente, quando cadastrada.
+2. Clique em **Revogar convite** na sessão do organizador. Recarregue o portal na janela anônima e tente reutilizar o link. O resultado deve ficar indisponível e o portal deve orientar a solicitar um novo convite.
+3. Em um grupo de teste com e-mail e push configurados, desative os avisos por e-mail de um participante, mantenha os de outro e realize o sorteio. Confira a preferência e verifique se os avisos entregues apontam para **Meu Amigo Secreto** com texto genérico.
 
 Commit sugerido — `git c "feat: unifica a revelação com convites privados"`
 

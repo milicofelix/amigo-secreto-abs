@@ -1,69 +1,88 @@
-@extends('layouts.amigo-secreto')
+@extends('layouts.amigo-secreto-private')
 
 @section('title', 'Meu Amigo Secreto')
 
-@section('content')
-<section class="mx-auto max-w-lg rounded-xl bg-white p-6 shadow">
-    <h1 class="mb-4 text-2xl font-bold text-indigo-700">Meu Amigo Secreto</h1>
+@push('head')
+    <script src="{{ asset('pwa-participant.js') }}?v=3" defer></script>
+@endpush
 
-    @if (!$participant)
-        <p class="mb-4 text-gray-700">Use o código privado que o organizador entregou para você.</p>
-        <form method="POST" action="{{ route('pwa.participant.verify') }}">
+@section('content')
+<section class="card">
+    <h1>Meu Amigo Secreto</h1>
+
+    <div id="participant-entry" @if ($participant && !$errors->has('code') && !session('invite_error')) hidden @endif>
+        <p>Use o convite privado que você recebeu do organizador.</p>
+        @if (session('invite_error'))
+            <p class="error" role="alert">{{ session('invite_error') }}</p>
+        @endif
+        <form method="POST" action="{{ route('pwa.participant.verify', absolute: false) }}">
             @csrf
-            <label for="participant-code" class="font-semibold">Código privado</label>
-            <input id="participant-code" name="code" type="password" autocomplete="off" required
-                   maxlength="24" class="mt-1 block w-full rounded border border-gray-300 px-3 py-2">
+            <label for="participant-code">Código privado</label>
+            <input id="participant-code" name="code" type="password" autocomplete="off" required maxlength="24">
             @error('code')
-                <p class="mt-2 text-sm text-red-700">{{ $message }}</p>
+                <p class="error" role="alert">{{ $message }}</p>
             @enderror
-            <button class="mt-4 rounded bg-indigo-600 px-4 py-2 font-semibold text-white">Entrar</button>
+            <button>Entrar</button>
         </form>
-    @else
+    </div>
+    @if ($participant)
+        <div id="participant-session" @if ($errors->has('code') || session('invite_error')) hidden @endif>
         <div id="pwa-participant" data-participant="{{ $participant->id }}" data-csrf="{{ csrf_token() }}"
+             data-invite-scope="{{ hash_hmac('sha256', $participant->pwa_access_hash, config('app.key')) }}"
              data-status-url="{{ route('participant.status.update', absolute: false) }}"
              data-push-url="{{ route('pwa.push.subscribe', absolute: false) }}"
              data-push-key="{{ \App\Jobs\SendDrawWebPush::enabled() ? config('services.web_push.public_key') : '' }}">
-            <p class="mb-4 font-semibold">{{ $participant->name }}</p>
+            <p><strong>{{ $participant->name }}</strong></p>
             @if ($assignment?->receiver)
-                <p class="mb-2">Você tirou <strong>{{ $assignment->receiver->name }}</strong>.</p>
-                @if ($assignment->receiver->wishlist)
-                    <p class="mb-4 text-gray-700">Sugestão: {{ $assignment->receiver->wishlist }}</p>
-                @endif
-                <div class="my-4 space-y-3">
-                    <button type="button" data-gift-status="shared_gift_idea" @disabled($participant->shared_gift_idea)
-                            class="rounded border border-indigo-600 px-3 py-2 text-indigo-700 disabled:opacity-60">
+                <div class="result">
+                    <p>Você tirou <strong>{{ $assignment->receiver->name }}</strong>.</p>
+                    @if ($assignment->receiver->wishlist)
+                        <p>Sugestão de presente: {{ $assignment->receiver->wishlist }}</p>
+                    @endif
+                </div>
+                <div class="actions">
+                    <button type="button" class="secondary" data-gift-status="shared_gift_idea" @disabled($participant->shared_gift_idea)>
                         {{ $participant->shared_gift_idea ? 'Ideia de presente compartilhada' : 'Marcar ideia como compartilhada' }}
                     </button>
                     <button type="button" id="pwa-gift" data-recorded="{{ $participant->bought_gift ? 'yes' : 'no' }}"
-                            @disabled($participant->bought_gift)
-                            class="rounded bg-indigo-600 px-3 py-2 text-white disabled:opacity-60">
+                            @disabled($participant->bought_gift)>
                         {{ $participant->bought_gift ? 'Presente marcado como comprado' : 'Marcar presente como comprado' }}
                     </button>
-                    <p id="pwa-sync-status" class="text-sm text-gray-700" role="status"></p>
-                    <button type="button" id="pwa-sync-retry" class="text-sm font-semibold text-indigo-700 underline" hidden>
-                        Tentar sincronizar
-                    </button>
-                    <a id="pwa-sync-login" href="{{ route('pwa.participant') }}" class="text-sm font-semibold text-indigo-700 underline" hidden>
-                        Verificar acesso novamente
-                    </a>
                 </div>
+                <p id="pwa-sync-status" class="notice" role="status"></p>
+                <button type="button" id="pwa-sync-retry" class="secondary" hidden>Tentar sincronizar</button>
+                <a id="pwa-sync-login" href="{{ route('pwa.participant', absolute: false) }}" hidden>Verificar acesso novamente</a>
             @else
-                <p class="mb-4 text-gray-700">O sorteio ainda não foi realizado.</p>
+                <p>O sorteio ainda não foi realizado.</p>
             @endif
 
-            @if (\App\Jobs\SendDrawWebPush::enabled())
-                <section class="mt-5 border-t pt-4" aria-label="Notificações">
-                    <button type="button" id="pwa-push-toggle" disabled
-                            class="rounded border border-indigo-600 px-3 py-2 text-indigo-700 disabled:opacity-60">Ativar notificações</button>
-                    <p id="pwa-push-status" class="mt-2 text-sm text-gray-700" role="status"></p>
-                </section>
-            @endif
+            <section class="section" aria-label="Notificações">
+                @if (session('notification_status'))
+                    <p class="notice" role="status">{{ session('notification_status') }}</p>
+                @endif
+                <div class="actions">
+                    @if ($participant->email)
+                        <form method="POST" action="{{ route('pwa.participant.email', absolute: false) }}">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="enabled" value="{{ $participant->draw_email_enabled ? '0' : '1' }}">
+                            <button class="secondary">{{ $participant->draw_email_enabled ? 'Desativar avisos por e-mail' : 'Ativar avisos por e-mail' }}</button>
+                        </form>
+                    @endif
+                    @if (\App\Jobs\SendDrawWebPush::enabled())
+                        <button type="button" id="pwa-push-toggle" class="secondary" disabled>Ativar notificações</button>
+                    @endif
+                </div>
+                @if (\App\Jobs\SendDrawWebPush::enabled())
+                    <p id="pwa-push-status" class="notice" role="status"></p>
+                @endif
+            </section>
         </div>
-        <form method="POST" action="{{ route('pwa.participant.logout') }}" class="mt-5">
+        <form method="POST" action="{{ route('pwa.participant.logout', absolute: false) }}" class="section">
             @csrf
-            <button class="text-sm text-gray-700 underline">Sair deste acesso</button>
+            <button class="secondary">Sair deste acesso</button>
         </form>
-        <script src="{{ asset('pwa-participant.js') }}" defer></script>
+        </div>
     @endif
 </section>
 @endsection

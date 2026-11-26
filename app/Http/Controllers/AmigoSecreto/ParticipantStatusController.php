@@ -22,11 +22,12 @@ class ParticipantStatusController extends Controller
         )->exists(), 409);
 
         $field = $data['field'];
-        $participant->newQuery()->whereKey($participant->id)
+        $participant->newQuery()->withActiveInvite()->whereKey($participant->id)
             ->where('pwa_access_hash', $participant->pwa_access_hash)
             ->where($field, false)
             ->update([$field => true, $field.'_at' => now()]);
         $participant->refresh();
+        abort_unless($participant->hasActiveInvite() && $participant->pwa_access_hash === $request->session()->get('pwa_participant.hash'), 401);
         abort_unless($participant->{$field}, 409);
 
         return response()->noContent();

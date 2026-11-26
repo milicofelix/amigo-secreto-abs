@@ -6,16 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AmigoSecreto\Group;
 use App\Models\AmigoSecreto\Participant;
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\Writer\PngWriter;
-use Endroid\QrCode\Color\Color;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeMode;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
-use Endroid\QrCode\Label\Alignment\LabelAlignmentCenter;
-use Endroid\QrCode\Label\Label;
-use Endroid\QrCode\Logo\Logo;
-use App\Helpers\AvatarHelper;
+use Illuminate\Support\Facades\Storage;
 
 class ParticipantController extends Controller
 {
@@ -32,7 +23,7 @@ class ParticipantController extends Controller
         $validated['secret_key'] = strtoupper(\Str::random(6));
 
         if ($request->hasFile('photo')) {
-            $validated['photo'] = $request->file('photo')->store('participants', 'public');
+            $validated['photo'] = $request->file('photo')->store('participants', 'local');
         }
 
         $group->participants()->create($validated);
@@ -50,7 +41,7 @@ class ParticipantController extends Controller
         $validated = $this->validateParticipant($request);
 
         if ($request->hasFile('photo')) {
-            $validated['photo'] = $request->file('photo')->store('participants', 'public');
+            $validated['photo'] = $request->file('photo')->store('participants', 'local');
         }
 
         $participant->update($validated);
@@ -79,43 +70,20 @@ class ParticipantController extends Controller
         return redirect()->route('groups.edit', $group)->with('success', 'Participante removido!');
     }
 
-    public function accessByKey(Group $group, $id)
+    public function photo(Group $group, Participant $participant)
     {
-        $participant = $group->participants()->findOrFail($id);
+        $path = $participant->photo;
+        abort_unless(is_string($path) && preg_match('~\Aparticipants/[A-Za-z0-9_-]+\.(?:jpe?g|png|webp|gif|bmp)\z~i', $path), 404);
 
-        // 🔗 URL secreta
-        $url = route('reveal.by.key', ['key' => $participant->secret_key]);
+        $disk = Storage::disk('local');
+        if (!$disk->exists($path)) {
+            $disk = Storage::disk('public');
+        }
+        abort_unless($disk->exists($path), 404);
 
-        // 🎨 QR personalizado
-        $qrCode = QrCode::create($url)
-            ->setEncoding(new Encoding('UTF-8'))
-            ->setSize(430)
-            ->setMargin(40)
-            ->setErrorCorrectionLevel(new ErrorCorrectionLevelHigh())
-            ->setForegroundColor(new Color(79, 70, 229))  // Roxo
-            ->setBackgroundColor(new Color(255, 255, 255));
-
-        $writer = new PngWriter();
-
-        $result = $writer->write($qrCode);
-        $qrBase64 = base64_encode($result->getString());
-
-        // 📌 Caso queira um logo no meio do QR (opcional)
-        // $logo = Logo::create(public_path('logo.png'))->setResizeToWidth(70);
-
-        // Foto ou emoji
-        $photo = $participant->photo
-            ? asset('storage/' . $participant->photo)
-            : AvatarHelper::emoji($participant->gender);
-
-        // 📌 Legenda bonita com nome
-        // $label = Label::create("🎁 {$participant->name}")
-        //     ->setTextColor(new Color(60, 60, 60))
-        //     ->setAlignment(new LabelAlignmentCenter());
-
-        //$result = $writer->write($qrCode, null, $label);
-        //$qrBase64 = base64_encode($result->getString());
-
-        return view('amigo-secreto.participants.qr-premium', compact('participant', 'group', 'qrBase64', 'photo'));
+        return $disk->response($path, headers: [
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

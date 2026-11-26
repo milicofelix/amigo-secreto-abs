@@ -22,9 +22,23 @@ class Participant extends Model
         'last_access_at',
     ];
 
-    protected $casts = [];
+    protected $casts = [
+        'invite_expires_at' => 'datetime',
+        'first_revealed_at' => 'datetime',
+        'draw_email_enabled' => 'boolean',
+    ];
 
-    protected $hidden = ['pwa_access_hash'];
+    protected $hidden = ['pwa_access_hash', 'secret_key', 'email', 'whatsapp', 'photo', 'wishlist'];
+
+    public function hasActiveInvite(): bool
+    {
+        return filled($this->pwa_access_hash) && $this->invite_expires_at?->isFuture();
+    }
+
+    public function scopeWithActiveInvite($query)
+    {
+        return $query->whereNotNull('pwa_access_hash')->where('invite_expires_at', '>', now());
+    }
 
     // 🔒 Criptografa ao salvar
     // public function setNameAttribute($value)

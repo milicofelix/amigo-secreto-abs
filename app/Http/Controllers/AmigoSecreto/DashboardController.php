@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AmigoSecreto\Group;
 use App\Models\AmigoSecreto\Participant;
-use App\Models\AmigoSecreto\SecretReveal;
-use App\Models\AmigoSecreto\AccessLog; 
 
 class DashboardController extends Controller
 {
@@ -18,16 +16,11 @@ class DashboardController extends Controller
         // === Cálculos do dashboard ===
         $participants = Participant::where('group_id', $currentGroup->id)->count();
 
-        $revealed = SecretReveal::whereHas('participant', function($q) use ($currentGroup){
-            $q->where('group_id', $currentGroup->id);
-        })->count();
-
+        $reveals = $currentGroup->participants()->whereNotNull('first_revealed_at');
+        $revealed = (clone $reveals)->count();
         $notRevealed = $participants - $revealed;
         $percent = $participants > 0 ? round(($revealed / $participants) * 100, 1) : 0;
-
-        $latestReveals = SecretReveal::whereHas('participant', function($q) use ($currentGroup){
-            $q->where('group_id', $currentGroup->id);
-        })->orderBy('revealed_at', 'desc')->take(5)->get();
+        $latestReveals = $reveals->latest('first_revealed_at')->take(5)->get(['name', 'first_revealed_at']);
 
         //$sharedIdeas = Participant::where('group_id', $currentGroup->id)->where('shared_gift_idea', true)->count();
         //$boughtGifts = Participant::where('group_id', $currentGroup->id)->where('bought_gift', true)->count();
@@ -89,6 +82,10 @@ class DashboardController extends Controller
     {
         if (!$request->user()?->is_organizer) {
             return view('amigo-secreto.home');
+        }
+
+        if ($request->routeIs('home') && $request->user()->can('access-super-admin')) {
+            return redirect()->route('super-admin.groups');
         }
 
         $year = Group::selectedYear($request->query('year'));

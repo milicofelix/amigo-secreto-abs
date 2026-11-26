@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('access-organizer', fn (User $user): bool => (bool) $user->is_organizer);
+        Gate::define('access-super-admin', fn (User $user): bool => $user->is_organizer && $user->is_super_admin);
         Gate::policy(Group::class, GroupPolicy::class);
 
         // total de visitantes únicos registrados

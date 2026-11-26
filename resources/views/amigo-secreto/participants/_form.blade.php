@@ -19,7 +19,7 @@
     <p class="text-sm text-gray-600 mt-1">JPG, PNG, WebP, GIF ou BMP, até 2 MB.</p>
 
     @if(isset($participant) && $participant->photo)
-        <img src="{{ asset('storage/'.$participant->photo) }}"
+        <img src="{{ route('participants.photo', [$group, $participant], absolute: false) }}"
              class="w-20 h-20 rounded-full mt-2 border shadow">
     @endif
 

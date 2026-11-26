@@ -61,7 +61,7 @@
                         @php
                             $gender = $a->giver->gender ?? null;
                             $icon = $gender === 'F' ? '👩' : ($gender === 'M' ? '👨' : '👤');
-                            $reveal = $a->giver->reveal;
+                            $revealedAt = $a->giver->first_revealed_at;
                         @endphp
 
                        <div class="participant-row bg-white shadow p-4 rounded-2xl">
@@ -73,14 +73,14 @@
 
                             {{-- AÇÃO (revelou ou não) --}}
                             <div>
-                                @if($reveal)
+                                @if($revealedAt)
                                     <div class="reveal-box">
                                         <div class="reveal-badge">🔓 Já revelou!</div>
-                                        <span class="reveal-date">{{ \Carbon\Carbon::parse($reveal->revealed_at)->format('d/m/Y H:i') }}</span>
+                                        <span class="reveal-date">{{ $revealedAt->format('d/m/Y H:i') }}</span>
                                         {{-- <a href="{{ route('reveal.form', $a->giver) }}" class="reveal-btn">🔁 Rever</a> --}}
-                                        <button onclick="window.location='{{ route('participants.qr', ['group' => $group->id, 'id' => $a->giver->id]) }}'"
+                                        <button onclick="window.location='{{ route('participants.qr', ['group' => $group->id, 'participant' => $a->giver->id]) }}'"
                                             class="qr-btn"
-                                            title="Ver QR Code">
+                                            title="Gerenciar convite">
                                             📱
                                         </button>
                                     </div>
@@ -98,10 +98,10 @@
                                     {{-- <a href="{{ route('reveal.form', $a->giver) }}" class="btn-reveal-primary">
                                         🔐 Revelar meu amigo
                                     </a> --}}
-                                    <button onclick="window.location='{{ route('participants.qr', ['group' => $group->id, 'id' => $a->giver->id]) }}'"
+                                    <button onclick="window.location='{{ route('participants.qr', ['group' => $group->id, 'participant' => $a->giver->id]) }}'"
                                             class="qr-btn"
-                                            title="Ver QR Code">
-                                            📱 Revelar Amigo Secreto
+                                            title="Gerenciar convite">
+                                            📱 Gerenciar convite
                                     </button>
                                 @endif
                             </div>
@@ -143,11 +143,6 @@
 
         </div>
 
-        @if ($draw)
-            <div class="text-center text-sm text-gray-500 mt-6">
-                💌 Compartilhe este resultado com seu grupo!
-            </div>
-        @endif
 
     </div>
 

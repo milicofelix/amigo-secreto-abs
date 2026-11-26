@@ -15,7 +15,7 @@ class AmigoSecretoParticipantTest extends TestCase
     public function test_group_form_sends_and_saves_a_jpeg_photo(): void
     {
         $this->signInOrganizer();
-        Storage::fake('public');
+        Storage::fake('local');
         $group = $this->ownedGroup(['name' => 'Grupo de teste']);
         $store = route('participants.store', $group);
 
@@ -30,7 +30,7 @@ class AmigoSecretoParticipantTest extends TestCase
 
         $participant = $group->participants()->sole();
         $this->assertNotNull($participant->photo);
-        Storage::disk('public')->assertExists($participant->photo);
+        Storage::disk('local')->assertExists($participant->photo);
     }
 
     public function test_invalid_photo_keeps_the_other_fields_in_the_group_form(): void

@@ -80,7 +80,7 @@ A primeira notificação avisa ao participante que o sorteio foi realizado. Para
 
 1. Aplique a migration com `docker compose exec app php artisan migrate`. O ambiente Docker local já recebeu a migration e um par de chaves VAPID de desenvolvimento.
 2. Para outro ambiente, configure `WEB_PUSH_SUBJECT`, `WEB_PUSH_PUBLIC_KEY` e `WEB_PUSH_PRIVATE_KEY` no `.env`. Use um contato válido no formato `mailto:...` e mantenha a chave privada no servidor. Gere um par com `php -r 'require "vendor/autoload.php"; print_r(Minishlink\WebPush\VAPID::createVapidKeys());'`. Em produção, use uma fila assíncrona com worker ativo para as tentativas de reenvio.
-3. Gere um código privado com `docker compose exec app php artisan amigo-secreto:codigo-pwa ID_DO_PARTICIPANTE`. Entregue o código diretamente ao participante antes do sorteio. A opção `--rotate` revoga o código, a sessão vinculada e as inscrições anteriores. O participante deve ativar as notificações novamente após a troca.
+3. Gere o convite no painel do organizador em **Grupos → Editar → Participantes → Convite**, ou emita um código pelo terminal com `docker compose exec app php artisan amigo-secreto:codigo-pwa ID_DO_PARTICIPANTE`. Entregue o convite diretamente ao participante. O código vence em 30 dias. A opção `--rotate` substitui o código e invalida as sessões anteriores, preservando a preferência de notificações.
 
 ### Teste manual no navegador
 

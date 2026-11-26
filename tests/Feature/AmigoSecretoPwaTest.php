@@ -27,7 +27,7 @@ class AmigoSecretoPwaTest extends TestCase
         $draw->assignments()->create(['giver_id' => $participant->id, 'receiver_id' => $other->id]);
         $status = ['participant_id' => $participant->id, 'field' => 'bought_gift', 'value' => 1];
 
-        $this->get(route('reveal.result', $participant))->assertRedirect(route('reveal.form', $participant));
+        $this->get(route('reveal.result', $participant))->assertRedirect(route('pwa.participant'));
         $this->get(route('pwa.participant'))->assertOk()->assertDontSee($other->name);
         $this->postJson(route('participant.status.update'), $status)->assertUnauthorized();
         $this->post(route('pwa.participant.verify'), ['code' => self::CODE])->assertRedirect(route('pwa.participant'));
@@ -111,7 +111,7 @@ class AmigoSecretoPwaTest extends TestCase
     {
         $group = Group::create(['name' => 'Grupo de teste', 'event_date' => now()->addWeek()->toDateString()]);
         $participant = $group->participants()->create(['name' => 'Participante A']);
-        $participant->forceFill(['pwa_access_hash' => hash('sha256', self::CODE)])->save();
+        $participant->forceFill(['pwa_access_hash' => hash('sha256', self::CODE), 'invite_expires_at' => now()->addMonth()])->save();
         $other = $group->participants()->create(['name' => 'Participante B']);
 
         return [$group, $participant, $other];
