@@ -115,6 +115,11 @@
     {{-- CONTEÚDO PRINCIPAL --}}
     <main class="flex-1 py-8">
         <div class="max-w-7xl mx-auto px-4">
+            @if (request()->routeIs('dashboard.select'))
+                <div class="mb-4 text-right">
+                    <a href="{{ route('pwa.participant') }}" class="font-semibold text-indigo-700 underline">Meu Amigo Secreto</a>
+                </div>
+            @endif
             @if (request()->routeIs('dashboard.select', 'groups.index', 'amigo.dashboard'))
                 <form method="GET"
                       action="{{ route(request()->routeIs('groups.index') ? 'groups.index' : 'dashboard.select') }}"

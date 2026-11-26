@@ -13,6 +13,7 @@
             🎉 Parabéns, {{ $participant->name }}!
         </h1>
 
+        @if ($assignment?->receiver)
         {{-- Subtítulo --}}
         <p class="text-lg text-gray-700 mb-4 fade-in">
             Você tirou...
@@ -28,6 +29,9 @@
             <p class="text-gray-600 mb-6 fade-in">
                 🎁 Sugestão: {{ $assignment->receiver->wishlist }}
             </p>
+        @endif
+        @else
+            <p class="text-gray-700">O sorteio ainda não foi realizado.</p>
         @endif
 
         {{-- Link voltar --}}

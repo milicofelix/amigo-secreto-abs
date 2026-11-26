@@ -67,6 +67,62 @@ Os testes do Laravel passaram com 29 verificações, incluindo o filtro por ano 
 
 Commit sugerido — `git c "docs: registra validação do PWA no Chrome"`
 
-## Versões futuras
+## Fase 5 — Notificações push
 
-Notificações push e sincronização offline ficam para uma etapa posterior.
+A primeira notificação avisa ao participante que o sorteio foi realizado. Para receber esse aviso, ele precisa conseguir verificar seu acesso e ativar as notificações antes do sorteio.
+
+- [x] Permitir a ativação e desativação de notificações em **Meu Amigo Secreto** após a verificação.
+- [x] Configurar o Web Push no Laravel. Proteger a chave VAPID privada no servidor e armazenar inscrições criptografadas.
+- [x] Disparar após a confirmação do sorteio no banco. O aviso usa texto genérico e abre **Meu Amigo Secreto**.
+- [x] Tratar permissão negada, remover inscrições expiradas e evitar reenvio para dispositivos com entrega confirmada.
+
+### Preparação
+
+1. Aplique a migration com `docker compose exec app php artisan migrate`. O ambiente Docker local já recebeu a migration e um par de chaves VAPID de desenvolvimento.
+2. Para outro ambiente, configure `WEB_PUSH_SUBJECT`, `WEB_PUSH_PUBLIC_KEY` e `WEB_PUSH_PRIVATE_KEY` no `.env`. Use um contato válido no formato `mailto:...` e mantenha a chave privada no servidor. Gere um par com `php -r 'require "vendor/autoload.php"; print_r(Minishlink\WebPush\VAPID::createVapidKeys());'`. Em produção, use uma fila assíncrona com worker ativo para as tentativas de reenvio.
+3. Gere um código privado com `docker compose exec app php artisan amigo-secreto:codigo-pwa ID_DO_PARTICIPANTE`. Entregue o código diretamente ao participante antes do sorteio. A opção `--rotate` revoga o código, a sessão vinculada e as inscrições anteriores. O participante deve ativar as notificações novamente após a troca.
+
+### Teste manual no navegador
+
+1. Use um grupo de teste. Antes do sorteio, abra **Meu Amigo Secreto** no Chrome, informe o código e toque em **Ativar notificações**. Em outro navegador ou perfil, negue a permissão.
+2. Realize o sorteio. Confira que o participante inscrito recebe um aviso genérico e que o perfil que negou a permissão continua usando o app normalmente.
+3. Clique no aviso e confira que o app pede a verificação de acesso antes da revelação. Desative as notificações e confira que a inscrição deixou de receber avisos.
+4. No iPhone ou iPad, abra o PWA pela Tela de Início antes de tocar em **Ativar notificações**. Repita o fluxo pela URL HTTPS de teste. [WebKit — Web Push no iOS e iPadOS](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/)
+
+Commit sugerido — `git c "feat: envia notificação push após o sorteio"`
+
+## Fase 6 — Sincronização offline de status
+
+O piloto é **Marcar presente como comprado**. A pessoa abre o fluxo enquanto está conectada, pode registrar a ação se perder a conexão e vê o status **Pendente de sincronização** até o servidor confirmar. Sorteios, revelações e administração de grupos exigem conexão.
+
+- [x] Restringir a atualização ao próprio participante, com campos permitidos e preservação da primeira data de confirmação.
+- [x] Guardar no IndexedDB uma única intenção de compra por participante, com prazo de sete dias. Senhas, códigos de acesso e resultados ficam fora da fila.
+- [x] Sincronizar ao voltar à rede ou reabrir o app com sessão válida. Exibir opção de reenvio e pedir nova verificação se a sessão expirar.
+- [x] Exibir **Pendente**, **Sincronizado** e **Precisa de atenção**. A sincronização ocorre com o app aberto.
+
+### Teste manual no navegador
+
+1. Em **Meu Amigo Secreto**, entre com o código de um participante sorteado em um grupo de teste. Com a página aberta, desconecte e marque o presente como comprado. Confira o estado **Pendente de sincronização**.
+2. Volte à rede e mantenha ou reabra o app. Confirme que a ação foi aplicada e que uma segunda tentativa mantém a data original.
+3. Repita com uma sessão expirada e confirme que o app solicita nova verificação. Tente acessar o status por outro participante e confira que o servidor recusa a alteração indevida.
+4. Confira no Chrome e no Safari, com o app aberto, que o retorno da conexão permite concluir o envio. No DevTools, confirme que a fila local guarda apenas os campos previstos e que a ação sai da fila após confirmação.
+
+Commit sugerido — `git c "feat: sincroniza status de presente após reconexão"`
+
+## Fase 7 — Validação de push e sincronização
+
+- [ ] Validar em Chrome para Android e no PWA instalado no iPhone. Usar um ambiente HTTPS e grupos de teste.
+- [x] Validar autorização, inscrição, revogação, expiração, disparo após o sorteio e reenvio sem alterar a data nos testes Laravel.
+- [x] Simular o push no Chrome e validar a sincronização ao reabrir o app, com o cache limitado aos dois arquivos públicos.
+- [x] Confirmar inscrição, aceitação do envio pelo provedor e revogação com um sorteio fictício em um perfil temporário do Chrome.
+- [ ] Confirmar a chegada da notificação real e a abertura pelo ícone em Android e iPhone.
+
+Os cinco testes do Laravel passaram com 70 verificações. No Chrome, a notificação simulada apareceu com texto genérico. O provedor aceitou um envio real de teste, mas a notificação real não apareceu no perfil automatizado durante a janela observada.
+
+### Teste manual no navegador
+
+1. Em cada dispositivo, receba um aviso de sorteio com o app em segundo plano e confira a abertura ao tocar na notificação.
+2. Registre um status sem conexão, reabra o app com rede e confira a confirmação do servidor e a remoção do item pendente.
+3. Repita os fluxos com permissão de notificações negada e com a sessão expirada. Registre no checklist os resultados por dispositivo.
+
+Commit sugerido — `git c "test: valida push e sincronização no PWA"`

@@ -15,7 +15,7 @@ class Assignment extends Model
     // 🔹 Pertence a um sorteio
     public function draw()
     {
-        return $this->belongsTo(Draw::class);
+        return $this->belongsTo(AsDraw::class);
     }
 
     // 🔹 Quem deu o presente

@@ -23,6 +23,19 @@
         </details>
     </aside>
 
+    @if ($pwaParticipant = request()->attributes->get('pwa.participant'))
+        <div id="pwa-participant" class="mb-4 text-sm" data-participant="{{ $pwaParticipant->id }}"
+             data-csrf="{{ csrf_token() }}" data-status-url="{{ route('participant.status.update', absolute: false) }}">
+            <button id="pwa-gift" type="button" data-recorded="{{ $pwaParticipant->bought_gift ? 'yes' : 'no' }}" hidden></button>
+            <p id="pwa-sync-status" role="status"></p>
+            <button id="pwa-sync-retry" type="button" class="font-semibold text-indigo-700 underline" hidden>Tentar sincronizar</button>
+            <a id="pwa-sync-login" href="{{ route('pwa.participant') }}" class="font-semibold text-indigo-700 underline" hidden>
+                Verificar acesso novamente
+            </a>
+        </div>
+        <script src="{{ asset('pwa-participant.js') }}" defer></script>
+    @endif
+
     <div class="space-y-4">
         @forelse ($groups as $group)
             <a href="{{ route('amigo.dashboard', $group->id) }}"

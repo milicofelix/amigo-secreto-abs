@@ -48,3 +48,26 @@ self.addEventListener('fetch', (event) => {
         })());
     }
 });
+
+self.addEventListener('push', (event) => {
+    let tag = 'amigo-secreto-sorteio';
+    try {
+        const payload = event.data?.json();
+        if (/^sorteio-\d+$/.test(payload?.tag)) {
+            tag = payload.tag;
+        }
+    } catch {
+        // O aviso padrão também funciona sem dados adicionais.
+    }
+
+    event.waitUntil(self.registration.showNotification('Amigo Secreto ABS', {
+        body: 'O sorteio foi realizado. Abra o app para consultar seu resultado.',
+        icon: OFFLINE_ICON,
+        tag,
+    }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(self.clients.openWindow(new URL('meu-amigo', self.registration.scope).href));
+});

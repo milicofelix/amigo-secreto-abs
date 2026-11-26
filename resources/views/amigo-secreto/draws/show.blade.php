@@ -85,17 +85,13 @@
                                         </button>
                                     </div>
                                     <label class="flex items-center gap-2 text-lg font-bold text-indigo-700">
-                                        <input type="checkbox" class="w-5 h-5"
-                                        onchange="updateStatus({{ $a->giver->id }}, 'shared_gift_idea', this.checked)"
-                                        {{ $a->giver->shared_gift_idea ? 'checked disabled' : '' }} />
-                                            🎀 Já postei meu presente
+                                        <input type="checkbox" class="w-5 h-5" disabled @checked($a->giver->shared_gift_idea) />
+                                            🎀 Ideia de presente compartilhada
                                     </label>
 
                                     <label class="flex items-center gap-2 text-lg font-bold text-green-700 mt-3">
-                                        <input type="checkbox" class="w-5 h-5"
-                                            onchange="updateStatus({{ $a->giver->id }}, 'bought_gift', this.checked)"
-                                            {{ $a->giver->bought_gift ? 'checked disabled' : '' }} />
-                                            🛒 Já comprei o presente
+                                        <input type="checkbox" class="w-5 h-5" disabled @checked($a->giver->bought_gift) />
+                                            🛒 Presente comprado
                                     </label>
 
                                 @else
@@ -124,14 +120,21 @@
 
                 <div class="text-center py-8">
                     <p class="text-gray-600 text-lg">
-                        Nenhum sorteio foi realizado ainda 🎲
+                        Nenhum sorteio foi realizado neste grupo.
                     </p>
+                    <a href="{{ route('groups.edit', $group) }}"
+                       class="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">
+                        Gerenciar grupo e realizar sorteio
+                    </a>
                 </div>
 
             @endif
 
             {{-- Voltar --}}
             <div class="mt-8 text-center">
+                @if ($draw)
+                    <a href="{{ route('pwa.participant') }}" class="mr-3 font-semibold text-indigo-700 underline">Atualizar meu presente</a>
+                @endif
                 <a href="{{ route('groups.index', ['year' => $group->eventYear()]) }}"
                 class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition w-full md:w-auto">
                     ← Voltar aos Grupos
@@ -140,9 +143,11 @@
 
         </div>
 
-        <div class="text-center text-sm text-gray-500 mt-6">
-            💌 Compartilhe este resultado com seu grupo!
-        </div>
+        @if ($draw)
+            <div class="text-center text-sm text-gray-500 mt-6">
+                💌 Compartilhe este resultado com seu grupo!
+            </div>
+        @endif
 
     </div>
 
@@ -220,44 +225,5 @@
         }
     </script>
 
-
-    <script>
-        function updateStatus(participantId, field, checked) {
-
-            // ✅ regra de “não desmarcar”
-            if (!checked) {
-                // força voltar para marcado visualmente
-                const selector = `input[data-participant="${participantId}"][data-field="${field}"]`;
-                const checkbox = document.querySelector(selector);
-                if (checkbox) checkbox.checked = true;
-                return;
-            }
-
-            fetch("{{ route('participant.status.update') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                },
-                body: JSON.stringify({
-                    participant_id: participantId,
-                    field: field,
-                    value: 1
-                })
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.success) {
-                    // 🔒 trava o checkbox depois de marcar
-                    const selector = `input[data-participant="${participantId}"][data-field="${field}"]`;
-                    const checkbox = document.querySelector(selector);
-                    if (checkbox) checkbox.disabled = true;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-            });
-        }
-    </script>
 
 @endsection

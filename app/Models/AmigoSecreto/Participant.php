@@ -24,6 +24,8 @@ class Participant extends Model
 
     protected $casts = [];
 
+    protected $hidden = ['pwa_access_hash'];
+
     // 🔒 Criptografa ao salvar
     // public function setNameAttribute($value)
     // {

@@ -36,6 +36,21 @@ class AmigoSecretoFlowTest extends TestCase
         }
     }
 
+    public function test_result_shows_an_empty_state_for_an_existing_group_without_a_completed_draw(): void
+    {
+        foreach ([now()->subDay(), now()->addDay()] as $date) {
+            $group = Group::create(['name' => 'Grupo sem sorteio', 'event_date' => $date->toDateString()]);
+
+            $this->get(route('draw.show', $group))
+                ->assertOk()
+                ->assertSee('Nenhum sorteio foi realizado neste grupo.')
+                ->assertSee(route('groups.edit', $group))
+                ->assertDontSee('Sorteio realizado!');
+        }
+
+        $this->get(route('draw.show', 999999))->assertNotFound();
+    }
+
     public function test_confirmation_appears_once_after_a_successful_draw(): void
     {
         $group = Group::create(['name' => 'Presente', 'event_date' => now()->addDays(2)->toDateString()]);

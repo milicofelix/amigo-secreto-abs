@@ -14,6 +14,7 @@ use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\SendWhatsAppMessageJob;
+use App\Jobs\SendDrawWebPush;
 use App\Models\AmigoSecreto\Participant;
 
 class AsDrawController extends Controller
@@ -72,6 +73,13 @@ class AsDrawController extends Controller
         DB::beginTransaction();
 
         try {
+            Group::whereKey($group->id)->lockForUpdate()->firstOrFail();
+            if ($group->draws()->where('status', 'completed')->exists()) {
+                DB::rollBack();
+
+                return back()->with('error', 'Este grupo já realizou o sorteio.');
+            }
+
             $draw = AsDraw::create([
                 'group_id' => $group->id,
                 'drawn_at' => now(),
@@ -114,34 +122,36 @@ class AsDrawController extends Controller
 
             DB::commit();
 
-            return redirect()
-                ->route($group->eventIsOver() ? 'dashboard.revealed-friends' : 'draw.show', ['group' => $group->id])
-                ->with('completed_draw_group_id', $group->id);
-
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Erro ao realizar sorteio: ' . $e->getMessage());
 
             return back()->with('error', 'Ocorreu um erro inesperado ao realizar o sorteio. Tente novamente.');
         }
+
+        if (SendDrawWebPush::enabled()) {
+            try {
+                SendDrawWebPush::dispatch($draw->id);
+            } catch (\Throwable) {
+                Log::error('Não foi possível processar o Web Push.', ['draw_id' => $draw->id]);
+            }
+        }
+
+        return redirect()
+            ->route($group->eventIsOver() ? 'dashboard.revealed-friends' : 'draw.show', ['group' => $group->id])
+            ->with('completed_draw_group_id', $group->id);
     }
 
     public function show(Group $group)
     {
-         // 🔴 REGRA DE NEGÓCIO CENTRAL
-        // Se o evento já passou, não existe mais segredo
-        if ($group->eventIsOver()) {
-            return redirect()->route('dashboard.revealed-friends', $group->id);
-        }
-
-        // Busca o último sorteio do grupo
         $draw = $group->draws()
+            ->where('status', 'completed')
             ->latest()
             ->with('assignments.giver', 'assignments.receiver')
             ->first();
 
-        if (!$draw) {
-            abort(404, 'Sorteio não encontrado para este grupo.');
+        if ($draw && $group->eventIsOver()) {
+            return redirect()->route('dashboard.revealed-friends', $group);
         }
 
         return view('amigo-secreto.draws.show', compact('group', 'draw'));

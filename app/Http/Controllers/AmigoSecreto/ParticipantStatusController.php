@@ -4,36 +4,32 @@ namespace App\Http\Controllers\AmigoSecreto;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\AmigoSecreto\Participant;
-use Illuminate\Support\Facades\Schema;
 
 class ParticipantStatusController extends Controller
 {
     public function update(Request $request)
     {
-        $participant = Participant::findOrFail($request->participant_id);
+        $participant = $request->attributes->get('pwa.participant');
+        abort_unless($participant, 401);
+        $data = $request->validate([
+            'participant_id' => ['required', 'integer'],
+            'field' => ['required', 'in:bought_gift,shared_gift_idea'],
+            'value' => ['required', 'in:1'],
+        ]);
+        abort_unless((int) $data['participant_id'] === $participant->id, 403);
+        abort_unless($participant->givenAssignments()->whereHas(
+            'draw', fn ($query) => $query->where('status', 'completed')
+        )->exists(), 409);
 
-        $field = $request->field; // 'shared_gift_idea' ou 'bought_gift'
-        $value = (int) $request->value;
+        $field = $data['field'];
+        $participant->newQuery()->whereKey($participant->id)
+            ->where('pwa_access_hash', $participant->pwa_access_hash)
+            ->where($field, false)
+            ->update([$field => true, $field.'_at' => now()]);
+        $participant->refresh();
+        abort_unless($participant->{$field}, 409);
 
-        // 🔒 se já está marcado, não mexe mais
-        if ($participant->$field == 1) {
-            return response()->json(['locked' => true]);
-        }
-
-        if ($value === 1) {
-            $participant->$field = 1;
-
-            // se existir campo *_at, preenche
-            $atField = $field . '_at';
-            if (Schema::hasColumn('participants', $atField)) {
-                $participant->$atField = now();
-            }
-
-            $participant->save();
-        }
-
-        return response()->json(['success' => true]);
+        return response()->noContent();
     }
 
 }

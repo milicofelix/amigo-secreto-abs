@@ -52,8 +52,6 @@ class RevealController extends Controller
          // 🔐 Confere a palavra-chave
         if (!hash_equals(trim($participant->secret_key ?? ''), trim($request->secret_key))) {
             \Log::warning("[REVEAL] Palavra-chave incorreta", [
-                'digitada' => $request->secret_key,
-                'esperada' => $participant->secret_key,
                 'participant_id' => $participant->id,
             ]);
             return back()->withErrors(['secret_key' => 'Palavra-chave incorreta.']);
@@ -73,6 +71,8 @@ class RevealController extends Controller
             'password_hash'  => Hash::make($request->password),
             'revealed_at'    => now(),
         ]);
+
+        $request->session()->put('legacy_reveal.participant_id', $participant->id);
 
         return redirect()->route('reveal.result', $participant)
                      ->with('success', 'Senha criada com sucesso!');
@@ -97,14 +97,18 @@ class RevealController extends Controller
 
         // 📌 Registrar somente o último acesso, sem alterar revealed_at
         $reveal->update(['last_access_at' => now()]);
+        $request->session()->put('legacy_reveal.participant_id', $participant->id);
 
         return redirect()->route('reveal.result', $participant);
     }
 
     // GET /reveal/result/{participant}
-    public function result(Participant $participant)
+    public function result(Participant $participant, Request $request)
     {
-        // aqui você pode opcionalmente exigir que exista reveal
+        if ($request->session()->get('legacy_reveal.participant_id') !== $participant->id) {
+            return redirect()->route('reveal.form', $participant);
+        }
+
         $assignment = $participant->givenAssignments()->with('receiver')->first();
 
         AccessHelper::log($participant->id);
@@ -113,7 +117,8 @@ class RevealController extends Controller
             'last_access_at' => now()
         ]);
 
-        return view('amigo-secreto.reveal.result', compact('participant', 'assignment'));
+        return response()->view('amigo-secreto.reveal.result', compact('participant', 'assignment'))
+            ->header('Cache-Control', 'private, no-store');
     }
 
     public function listRevealed(Group $group)
