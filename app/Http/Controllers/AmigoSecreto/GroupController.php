@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\AmigoSecreto;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\AmigoSecreto\DrawEvent;
 use App\Models\AmigoSecreto\Group;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class GroupController extends Controller
 {
@@ -15,7 +16,11 @@ class GroupController extends Controller
     public function index(Request $request)
     {
         $selectedYear = Group::selectedYear($request->query('year'));
-        $groups = Group::forYear($selectedYear)->latest()->get();
+        $groups = Group::createdBy($request->user())->forYear($selectedYear)
+            ->withExists([
+                'draws as has_draw_history' => fn ($query) => $query->where('status', 'completed'),
+                'draws as has_active_draw' => fn ($query) => $query->active(),
+            ])->latest()->get();
 
         return view('amigo-secreto.groups.index', compact('groups', 'selectedYear'));
     }
@@ -42,8 +47,9 @@ class GroupController extends Controller
             'event_location' => 'nullable|string|max:255',
         ]);
 
-        //$validated['user_id'] = Auth::id();
-        $group = Group::create($validated);
+        $group = new Group($validated);
+        $group->user()->associate($request->user());
+        $group->save();
 
         return redirect()->route('groups.index', ['year' => $group->eventYear()])->with('success', 'Grupo criado com sucesso!');
     }
@@ -51,9 +57,9 @@ class GroupController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Group $group)
     {
-        //
+        return redirect()->route('groups.edit', $group);
     }
 
     /**
@@ -61,8 +67,11 @@ class GroupController extends Controller
      */
     public function edit(Group $group)
     {
-        // $this->authorizeGroup($group);
-        return view('amigo-secreto.groups.edit', compact('group'));
+        $hasCompletedDraw = $group->draws()->active()->exists();
+        $history = DrawEvent::whereIn('draw_id', $group->draws()->select('id'))->with('actor:id,name')
+            ->latest('created_at')->latest('id')->simplePaginate(10, pageName: 'historico');
+
+        return view('amigo-secreto.groups.edit', compact('group', 'hasCompletedDraw', 'history'));
     }
 
     /**
@@ -70,8 +79,6 @@ class GroupController extends Controller
      */
     public function update(Request $request, Group $group)
     {
-        $this->authorizeGroup($group);
-
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'description'    => 'nullable|string',
@@ -81,9 +88,35 @@ class GroupController extends Controller
             'event_location' => 'nullable|string|max:255',
         ]);
 
-        $group->update($validated);
+        $group->withDrawLock(function (Group $locked) use ($validated) {
+            if (array_key_exists('event_date', $validated) && $validated['event_date'] !== $locked->event_date
+                && $locked->draws()->active()->exists()) {
+                throw ValidationException::withMessages(['event_date' => 'A data do evento fica bloqueada após o sorteio.']);
+            }
+
+            $locked->update($validated);
+        });
+        $group->refresh();
 
         return redirect()->route('groups.index', ['year' => $group->eventYear()])->with('success', 'Grupo atualizado com sucesso!');
+    }
+
+    public function scheduleReveal(Request $request, Group $group)
+    {
+        $data = $request->validate(
+            ['collective_reveal_at' => ['required', 'date_format:Y-m-d\TH:i', 'after:now']],
+            ['collective_reveal_at.after' => 'Escolha uma data e hora futuras para a revelação coletiva.'],
+        );
+
+        $group->withDrawLock(function (Group $locked) use ($data) {
+            if ($locked->collectiveRevealAt() && $locked->draws()->active()->exists()) {
+                throw ValidationException::withMessages(['collective_reveal_at' => 'A revelação já está agendada para este sorteio.']);
+            }
+
+            $locked->update(['collective_reveal_at' => $data['collective_reveal_at']]);
+        });
+
+        return redirect()->route('groups.edit', $group)->with('success', 'Revelação coletiva agendada.');
     }
 
     /**
@@ -91,14 +124,15 @@ class GroupController extends Controller
      */
     public function destroy(Group $group)
     {
-        $this->authorizeGroup($group);
-        $group->delete();
+        $group->withDrawLock(function (Group $locked) {
+            if ($locked->draws()->where('status', 'completed')->exists()) {
+                throw ValidationException::withMessages(['group' => 'Grupos com histórico de sorteio não podem ser excluídos.']);
+            }
+
+            $locked->delete();
+        });
 
         return redirect()->route('groups.index', ['year' => $group->eventYear()])->with('success', 'Grupo excluído com sucesso!');
     }
 
-     private function authorizeGroup(Group $group)
-    {
-        abort_unless($group->user_id === Auth::id(), 403, 'Acesso negado.');
-    }
 }

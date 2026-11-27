@@ -13,6 +13,7 @@
             🎉 Parabéns, {{ $participant->name }}!
         </h1>
 
+        @if ($assignment?->receiver)
         {{-- Subtítulo --}}
         <p class="text-lg text-gray-700 mb-4 fade-in">
             Você tirou...
@@ -29,11 +30,15 @@
                 🎁 Sugestão: {{ $assignment->receiver->wishlist }}
             </p>
         @endif
+        @else
+            <p class="text-gray-700">O sorteio ainda não foi realizado.</p>
+        @endif
 
         {{-- Link voltar --}}
-        <a href="{{ route('groups.index') }}"
+        @php($canManageGroup = auth()->user()?->can('manage', $participant->group))
+        <a href="{{ $canManageGroup ? route('groups.index', ['year' => $participant->group->eventYear()], absolute: false) : route('home', absolute: false) }}"
            class="inline-block text-indigo-600 hover:text-indigo-700 font-semibold mt-2 text-base md:text-lg fade-in">
-            ← Voltar ao início
+            {{ $canManageGroup ? '← Voltar aos grupos' : '← Voltar ao início' }}
         </a>
 
     </div>

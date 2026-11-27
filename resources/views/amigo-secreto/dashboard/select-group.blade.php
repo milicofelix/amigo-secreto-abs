@@ -7,6 +7,9 @@
         📊 Escolha um grupo
     </h1>
 
+    <x-pwa-install />
+    <x-pwa-pending-sync :participant="request()->attributes->get('pwa.participant')" />
+
     <div class="space-y-4">
         @forelse ($groups as $group)
             <a href="{{ route('amigo.dashboard', $group->id) }}"

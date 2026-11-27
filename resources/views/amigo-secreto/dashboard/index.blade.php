@@ -94,10 +94,10 @@
                 @foreach($latestReveals as $item)
                     <div class="flex justify-between bg-indigo-50 p-3 rounded-lg mb-2">
                         <span class="font-semibold text-indigo-800">
-                            {{ $item->participant->name }}
+                            {{ $item->name }}
                         </span>
                         <span class="text-gray-700 text-sm">
-                            📅 {{ $item->revealed_at->format('d/m H:i') }}
+                            📅 {{ $item->first_revealed_at->format('d/m H:i') }}
                         </span>
                     </div>
                 @endforeach
@@ -140,6 +140,17 @@
             @endif
         </div>
 
+        <section class="mt-6 rounded bg-white p-5 shadow">
+            <h2 class="mb-2 text-xl font-semibold">Participantes do grupo</h2>
+            <ul class="grid gap-2 sm:grid-cols-2">
+                @forelse ($members as $listedMember)
+                    <li class="rounded bg-gray-50 px-3 py-2">{{ $listedMember->name }}</li>
+                @empty
+                    <li>Este grupo ainda não tem participantes.</li>
+                @endforelse
+            </ul>
+        </section>
+
         {{-- BOTOES --}}
         <div class="mt-8 flex flex-wrap justify-center gap-4">
             <a href="{{ route('draw.show', $group->id) }}"
@@ -152,10 +163,12 @@
             👀 Ver Revelações
             </a>
 
+            @can('manage', $group)
             <a href="{{ route('dashboard.start-draw', $group->id) }}"
                 class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold">
                 🎉 Sortear quem começa
             </a>
+            @endcan
 
         </div>
 

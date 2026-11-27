@@ -6,38 +6,22 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AmigoSecreto\Group;
 use App\Models\AmigoSecreto\Participant;
-use App\Models\AmigoSecreto\SecretReveal;
-use App\Models\AmigoSecreto\AccessLog; 
 
 class DashboardController extends Controller
 {
-    public function index($groupId = null)
+    public function index(Group $group)
     {
-        // Se não foi passado um ID, usa o primeiro grupo
-        if (!$groupId) {
-            $currentGroup = Group::first();
-
-            if (!$currentGroup) {
-                return redirect()->route('groups.create')
-                    ->with('warning', 'Crie um grupo para iniciar o Dashboard.');
-            }
-        } else {
-            $currentGroup = Group::findOrFail($groupId);
-        }
+        $currentGroup = $group;
 
         // === Cálculos do dashboard ===
-        $participants = Participant::where('group_id', $currentGroup->id)->count();
+        $members = $currentGroup->participants()->orderBy('name')->get(['id', 'name']);
+        $participants = $members->count();
 
-        $revealed = SecretReveal::whereHas('participant', function($q) use ($currentGroup){
-            $q->where('group_id', $currentGroup->id);
-        })->count();
-
+        $reveals = $currentGroup->participants()->whereNotNull('first_revealed_at');
+        $revealed = (clone $reveals)->count();
         $notRevealed = $participants - $revealed;
         $percent = $participants > 0 ? round(($revealed / $participants) * 100, 1) : 0;
-
-        $latestReveals = SecretReveal::whereHas('participant', function($q) use ($currentGroup){
-            $q->where('group_id', $currentGroup->id);
-        })->orderBy('revealed_at', 'desc')->take(5)->get();
+        $latestReveals = $reveals->latest('first_revealed_at')->take(5)->get(['name', 'first_revealed_at']);
 
         //$sharedIdeas = Participant::where('group_id', $currentGroup->id)->where('shared_gift_idea', true)->count();
         //$boughtGifts = Participant::where('group_id', $currentGroup->id)->where('bought_gift', true)->count();
@@ -59,6 +43,7 @@ class DashboardController extends Controller
         return view('amigo-secreto.dashboard.index', [
             'group' => $currentGroup,
             'participants' => $participants,
+            'members' => $members,
             'revealed' => $revealed,
             'notRevealed' => $notRevealed,
             'percent' => $percent,
@@ -97,6 +82,14 @@ class DashboardController extends Controller
 
     public function home(Request $request)
     {
+        if (!$request->user()?->is_organizer) {
+            return view('amigo-secreto.home');
+        }
+
+        if ($request->routeIs('home') && $request->user()->can('access-super-admin')) {
+            return redirect()->route('super-admin.groups');
+        }
+
         $year = Group::selectedYear($request->query('year'));
 
         return redirect()->route('dashboard.select', ['year' => $year]);
@@ -105,34 +98,31 @@ class DashboardController extends Controller
     public function selectGroup(Request $request)
     {
         $selectedYear = Group::selectedYear($request->query('year'));
-        $groups = Group::forYear($selectedYear)->withCount('participants')->orderBy('name')->get();
+        $groups = Group::createdBy($request->user())->forYear($selectedYear)->withCount('participants')->orderBy('name')->get();
 
         return view('amigo-secreto.dashboard.select-group', compact('groups', 'selectedYear'));
     }
 
     public function revealedFriends(Group $group)
     {
-         // 🔒 TRAVA DEFINITIVA
-        if (!$group->eventIsOver()) {
-            return redirect()
-                ->route('amigo.dashboard', $group->id)
-                ->with('warning', 'Os amigos secretos ainda não podem ser revelados.');
-        }
-        
-        $results = \DB::table('assignments as a')
-            ->join('participants as g', 'g.id', '=', 'a.giver_id')
-            ->join('participants as r', 'r.id', '=', 'a.receiver_id')
-            ->where('g.group_id', $group->id)
-            ->orderBy('g.name')
-            ->select([
-                'g.name as quem_tirou',
-                'r.name as quem_foi_tirado',
-            ])
-            ->get();
+        return $group->withDrawLock(function (Group $locked) {
+            if (!$locked->canRevealCollectively()) {
+                return redirect()
+                    ->route('draw.show', $locked)
+                    ->with('warning', 'A revelação coletiva ainda não está disponível.');
+            }
 
-        return view('amigo-secreto.dashboard.revealed-friends', [
-            'group'   => Group::findOrFail($group->id),
-            'results' => $results
-        ]);
+            $drawId = $locked->draws()->active()->latest('id')->value('id');
+            $results = \DB::table('assignments as a')
+                ->join('participants as g', 'g.id', '=', 'a.giver_id')
+                ->join('participants as r', 'r.id', '=', 'a.receiver_id')
+                ->where('a.draw_id', $drawId)
+                ->where('g.group_id', $locked->id)->where('r.group_id', $locked->id)
+                ->orderBy('g.name')
+                ->select(['g.name as quem_tirou', 'r.name as quem_foi_tirado'])
+                ->get();
+
+            return view('amigo-secreto.dashboard.revealed-friends', ['group' => $locked, 'results' => $results]);
+        });
     }
 }

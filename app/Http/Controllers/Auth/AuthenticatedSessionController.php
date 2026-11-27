@@ -28,14 +28,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-         $previous = session('previous_url');
+        $destination = $request->user()->can('access-super-admin') ? 'super-admin.groups' : 'dashboard.home';
 
-        if ($previous) {
-            session()->forget('previous_url');
-            return redirect()->to($previous);
-        }
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route($destination, absolute: false));
     }
 
     /**

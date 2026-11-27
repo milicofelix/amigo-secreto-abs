@@ -2,6 +2,7 @@
 
 namespace App\Models\AmigoSecreto;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class AsDraw extends Model
@@ -10,11 +11,23 @@ class AsDraw extends Model
         'group_id',
         'drawn_at',
         'status',
+        'cancelled_at',
     ];
 
     protected $casts = [
-    'drawn_at' => 'datetime',
+        'drawn_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'completed')->whereNull('cancelled_at');
+    }
+
+    public function events()
+    {
+        return $this->hasMany(DrawEvent::class, 'draw_id');
+    }
 
     // 🔹 Pertence a um grupo
     public function group()

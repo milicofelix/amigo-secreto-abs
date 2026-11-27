@@ -23,9 +23,9 @@
         Não compartilhe com outras pessoas! 🔒
     </p>
 
-    <a href="{{ url()->previous() }}"
+    <a href="{{ route('draw.show', ['group' => $participant->group_id], absolute: false) }}"
        class="block mt-6 text-indigo-600 hover:text-indigo-800 font-semibold">
-        ← Voltar
+        ← Voltar ao sorteio
     </a>
 </div>
 @endsection

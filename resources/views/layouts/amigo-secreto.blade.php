@@ -12,6 +12,13 @@
 
     <title>@yield('title', 'Amigo Secreto')</title>
 
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/pwa-icon-180.png') }}">
+    @if (request()->routeIs('home', 'dashboard.select'))
+        <script src="{{ asset('pwa-install.js') }}" defer></script>
+    @endif
+
     {{-- Tailwind via CDN --}}
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -25,19 +32,20 @@
     <nav class="bg-indigo-600 text-white shadow relative"> {{-- ✅ (AQUI) adicionei relative no nav para reforçar o contexto do absolute --}}
 
         {{-- ✅ (AQUI) você tinha comentado esse container. Sem ele o menu fica “solto” e pode vazar --}}
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
 
             {{-- LOGO (opcional) --}}
             <a href="{{ route('home') }}"
             class="text-lg font-bold hover:text-yellow-300 flex items-center gap-2">
-                <img src="https://cdn-icons-png.flaticon.com/512/2830/2830308.png"
-                    class="w-7 h-7" alt="logo">
+                <img src="{{ asset('images/pwa-icon-180.png') }}"
+                    class="w-7 h-7 rounded" alt="">
                 Amigo Secreto
             </a>
 
             {{-- MENU --}}
-            <div class="flex items-center gap-6 text-sm font-semibold">
+            <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
 
+                @can('access-organizer')
                 {{-- Trocar grupo --}}
                 <div class="relative inline-block text-left">
                     <details class="group">
@@ -100,6 +108,25 @@
                     👥 Grupos
                 </a>
 
+                @can('access-super-admin')
+                    <a href="{{ route('super-admin.groups', absolute: false) }}"
+                       class="hover:text-yellow-300 {{ request()->routeIs('super-admin.groups') ? 'underline text-yellow-300' : '' }}">
+                        Painel Super Admin
+                    </a>
+                @endcan
+
+                <form method="POST" action="{{ route('logout', absolute: false) }}">
+                    @csrf
+                    <button class="hover:underline">Sair</button>
+                </form>
+                @elseif (request()->attributes->has('pwa.participant'))
+                    <x-amigo-secreto-participant-nav />
+                @else
+                    <a href="{{ route('pwa.participant', absolute: false) }}" class="hover:underline">Meu Amigo Secreto</a>
+                    @unless(request()->routeIs('login'))
+                        <a href="{{ route('login', absolute: false) }}" class="hover:underline">Entrar como organizador</a>
+                    @endunless
+                @endcan
             </div>
         </div>
     </nav>
@@ -108,6 +135,11 @@
     {{-- CONTEÚDO PRINCIPAL --}}
     <main class="flex-1 py-8">
         <div class="max-w-7xl mx-auto px-4">
+            @if (request()->routeIs('dashboard.select'))
+                <div class="mb-4 text-right">
+                    <a href="{{ route('pwa.participant') }}" class="font-semibold text-indigo-700 underline">Meu Amigo Secreto</a>
+                </div>
+            @endif
             @if (request()->routeIs('dashboard.select', 'groups.index', 'amigo.dashboard'))
                 <form method="GET"
                       action="{{ route(request()->routeIs('groups.index') ? 'groups.index' : 'dashboard.select') }}"
@@ -148,5 +180,12 @@
 
     {{-- Script JS opcional --}}
     <script src="{{ asset('js/app.js') }}"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js').catch((error) => {
+                console.warn('Não foi possível ativar o modo offline.', error);
+            });
+        }
+    </script>
 </body>
 </html>

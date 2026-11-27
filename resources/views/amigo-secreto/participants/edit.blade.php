@@ -18,7 +18,7 @@
         @method('PUT')
 
         {{-- Formulário compartilhado --}}
-        @include('amigo-secreto.participants._form', ['submitLabel' => 'Atualizar'])
+        @include('amigo-secreto.participants._form')
 
         {{-- Botão de submit --}}
         <div class="mt-6 text-right">
@@ -29,5 +29,8 @@
         </div>
     </form>
 
+    <a href="{{ route('groups.edit', $group, absolute: false) }}" class="mt-4 inline-block font-semibold text-indigo-700 underline">
+        ← Voltar ao grupo
+    </a>
 </div>
 @endsection

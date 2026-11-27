@@ -4,6 +4,12 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\AmigoSecreto\Group;
+use App\Models\User;
+use App\Policies\AmigoSecreto\GroupPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use View;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +28,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('access-organizer', fn (User $user): bool => (bool) $user->is_organizer);
+        Gate::define('access-super-admin', fn (User $user): bool => $user->is_organizer && $user->is_super_admin);
+        Gate::policy(Group::class, GroupPolicy::class);
+
+        RateLimiter::for('participant-code', fn (Request $request) => Limit::perMinute(8)->by($request->ip()));
+        RateLimiter::for('participant-recovery', fn (Request $request) => Limit::perMinutes(10, 4)->by($request->ip()));
+
         // total de visitantes únicos registrados
         // só executa se a tabela existir
         if (\Schema::hasTable('visitors')) {
@@ -35,8 +48,11 @@ class AppServiceProvider extends ServiceProvider
             $year = $data['selectedYear'] ?? ($group instanceof Group
                 ? $group->eventYear()
                 : Group::selectedYear(request()->query('year')));
-            $groups = Group::select('id', 'name', 'event_date', 'created_at')->orderBy('name')->get();
-            $years = $groups->map(fn (Group $group) => $group->eventYear())
+            $user = request()->user();
+            $groups = $user?->is_organizer
+                ? Group::createdBy($user)->select('id', 'name', 'event_date', 'created_at')->orderBy('name')->get()
+                : collect();
+            $years = $groups->toBase()->map(fn (Group $group) => $group->eventYear())
                 ->push(now()->year, $year)->unique()->sortDesc();
 
             $view->with([

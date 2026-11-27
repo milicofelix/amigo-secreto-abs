@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Http\Controllers\AmigoSecreto;
+
+use App\Http\Controllers\Controller;
+use App\Models\AmigoSecreto\Group;
+use App\Models\AmigoSecreto\Participant;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+
+class ParticipantImportController extends Controller
+{
+    public function create(Request $request, Group $group)
+    {
+        $year = $group->eventYear() - 1;
+        $sources = $this->sources($group)->withCount('participants')->orderBy('name')->get();
+        $source = $request->filled('source')
+            ? $sources->find($request->integer('source'))
+            : ($sources->count() === 1 ? $sources->first() : null);
+        $participants = $source?->participants()->orderBy('name')->get() ?? collect();
+        $alreadyImported = $group->participants()->whereNotNull('imported_from_participant_id')
+            ->pluck('imported_from_participant_id')->all();
+        $hasCompletedDraw = $group->draws()->active()->exists();
+
+        return view('amigo-secreto.participants.import', compact(
+            'group', 'year', 'sources', 'source', 'participants', 'alreadyImported', 'hasCompletedDraw'
+        ));
+    }
+
+    public function store(Request $request, Group $group)
+    {
+        $data = $request->validate([
+            'source' => ['required', 'integer'],
+            'participants' => ['required', 'array', 'min:1'],
+            'participants.*' => ['required', 'integer', 'distinct'],
+        ], [
+            'participants.required' => 'Selecione pelo menos um participante.',
+        ]);
+
+        [$added, $skipped, $unreadableEmails, $unavailableWhatsapps] = DB::transaction(function () use ($group, $data) {
+            $destination = Group::lockForUpdate()->findOrFail($group->id);
+            Gate::authorize('manage', $destination);
+
+            if ($destination->draws()->active()->exists()) {
+                throw ValidationException::withMessages(['source' => 'Este grupo já realizou o sorteio.']);
+            }
+
+            $source = $this->sources($destination)->find($data['source']);
+            $participants = $source?->participants()->whereKey($data['participants'])->get();
+            if (!$participants || $participants->count() !== count($data['participants'])) {
+                throw ValidationException::withMessages(['source' => 'Escolha participantes de um grupo do ano anterior.']);
+            }
+
+            $existing = $destination->participants()->get();
+            $added = 0;
+            $unreadableEmails = 0;
+            $unavailableWhatsapps = 0;
+
+            foreach ($participants as $participant) {
+                if ($existing->contains(fn (Participant $current) =>
+                    $current->imported_from_participant_id === $participant->id
+                    || $this->sameRegistration($current, $participant)
+                )) {
+                    continue;
+                }
+
+                $email = $participant->email;
+                if ($email === null && filled($participant->getRawOriginal('email'))) {
+                    $unreadableEmails++;
+                }
+
+                $whatsapp = $participant->whatsapp;
+                if ($whatsapp !== null && strlen($whatsapp) > 20) {
+                    $whatsapp = preg_replace('/[ ().-]/', '', $whatsapp);
+                    $whatsapp = strlen($whatsapp) <= 20 ? $whatsapp : null;
+                }
+                if ($whatsapp === null && filled($participant->getRawOriginal('whatsapp'))) {
+                    $unavailableWhatsapps++;
+                }
+
+                $copy = $destination->participants()->make([
+                    ...$participant->only(['name', 'gender', 'photo']),
+                    'email' => $email,
+                    'whatsapp' => $whatsapp,
+                    'secret_key' => Str::upper(Str::random(12)),
+                ]);
+                $copy->forceFill(['imported_from_participant_id' => $participant->id])->save();
+                $existing->push($copy);
+                $added++;
+            }
+
+            return [$added, $participants->count() - $added, $unreadableEmails, $unavailableWhatsapps];
+        });
+
+        $message = $added === 1 ? '1 participante importado.' : "{$added} participantes importados.";
+        if ($skipped > 0) {
+            $message .= $skipped === 1
+                ? ' 1 cadastro já existente foi ignorado.'
+                : " {$skipped} cadastros já existentes foram ignorados.";
+        }
+
+        $response = redirect()->route('groups.edit', $group)->with('success', $message);
+        $warnings = [];
+        if ($unreadableEmails > 0) {
+            $warnings[] = "Não foi possível ler {$unreadableEmails} e-mail(s) do grupo anterior.";
+        }
+        if ($unavailableWhatsapps > 0) {
+            $warnings[] = "{$unavailableWhatsapps} contato(s) de WhatsApp do grupo anterior estavam mascarados ou ilegíveis.";
+        }
+        if ($warnings !== []) {
+            $warnings[] = 'Confira os participantes importados e preencha os contatos em branco, se necessário.';
+            $response->with('participant_import_warning', implode(' ', $warnings));
+        }
+
+        return $response;
+    }
+
+    private function sources(Group $group): Builder
+    {
+        return Group::forYear($group->eventYear() - 1)->where('user_id', $group->user_id);
+    }
+
+    private function sameRegistration(Participant $current, Participant $source): bool
+    {
+        return Str::lower(Str::squish($current->name)) === Str::lower(Str::squish($source->name))
+            && Str::lower(trim($current->email ?? '')) === Str::lower(trim($source->email ?? ''))
+            && preg_replace('/\D/', '', $current->whatsapp ?? '') === preg_replace('/\D/', '', $source->whatsapp ?? '');
+    }
+}

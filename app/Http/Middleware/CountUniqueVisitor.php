@@ -16,7 +16,11 @@ class CountUniqueVisitor
      */
     public function handle(Request $request, Closure $next): Response
     {
-         $ip = $request->ip();
+        if ($request->is('meu-amigo', 'meu-amigo/*', 'reveal/*', 'participant/status/*')) {
+            return $next($request);
+        }
+
+        $ip = $request->ip();
         $now = Carbon::now();
 
         // verifica se o IP já foi contado nas últimas 24h

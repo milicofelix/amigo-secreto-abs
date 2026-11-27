@@ -14,11 +14,12 @@
 {{-- Foto do participante --}}
 <div class="mb-4">
     <label class="block font-semibold mb-1">Foto (opcional)</label>
-    <input type="file" name="photo" accept="image/*"
+    <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp"
            class="w-full border rounded p-2">
+    <p class="text-sm text-gray-600 mt-1">JPG, PNG, WebP, GIF ou BMP, até 2 MB.</p>
 
     @if(isset($participant) && $participant->photo)
-        <img src="{{ asset('storage/'.$participant->photo) }}"
+        <img src="{{ route('participants.photo', [$group, $participant], absolute: false) }}"
              class="w-20 h-20 rounded-full mt-2 border shadow">
     @endif
 
@@ -61,11 +62,4 @@
     @error('wishlist')
         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
     @enderror
-</div>
-
-{{-- Botão --}}
-<div class="mt-6">
-    <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded w-full md:w-auto">
-        {{ $submitLabel ?? 'Salvar' }}
-    </button>
 </div>

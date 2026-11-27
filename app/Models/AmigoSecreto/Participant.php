@@ -22,7 +22,28 @@ class Participant extends Model
         'last_access_at',
     ];
 
-    protected $casts = [];
+    protected $casts = [
+        'invite_expires_at' => 'datetime',
+        'invite_code' => 'encrypted',
+        'invite_recovery_expires_at' => 'datetime',
+        'first_revealed_at' => 'datetime',
+        'draw_email_enabled' => 'boolean',
+    ];
+
+    protected $hidden = [
+        'pwa_access_hash', 'invite_code', 'invite_recovery_hash', 'invite_recovery_expires_at',
+        'email_lookup_hash', 'secret_key', 'email', 'whatsapp', 'photo', 'wishlist',
+    ];
+
+    public function hasActiveInvite(): bool
+    {
+        return filled($this->pwa_access_hash) && $this->invite_expires_at?->isFuture();
+    }
+
+    public function scopeWithActiveInvite($query)
+    {
+        return $query->whereNotNull('pwa_access_hash')->where('invite_expires_at', '>', now());
+    }
 
     // 🔒 Criptografa ao salvar
     // public function setNameAttribute($value)
@@ -32,13 +53,57 @@ class Participant extends Model
 
     public function setEmailAttribute($value)
     {
-        $this->attributes['email'] = !empty($value) ? Crypt::encryptString($value) : null;
+        $this->attributes['email'] = filled($value) ? Crypt::encryptString($value) : null;
+        $lookupHash = filled($value) ? self::emailLookupHash($value) : null;
+
+        if ($lookupHash !== ($this->attributes['email_lookup_hash'] ?? null)) {
+            $this->attributes['invite_recovery_hash'] = null;
+            $this->attributes['invite_recovery_expires_at'] = null;
+        }
+
+        $this->attributes['email_lookup_hash'] = $lookupHash;
     }
 
-    // public function setWhatsappAttribute($value)
-    // {
-    //     $this->attributes['whatsapp'] = !empty($value) ? Crypt::encryptString($value) : null;
-    // }
+    public static function emailLookupHash(string $email): string
+    {
+        return hash_hmac('sha256', mb_strtolower(trim($email)), config('app.key'));
+    }
+
+    public function getEmailAttribute(?string $value): ?string
+    {
+        if ($value === null || str_contains($value, '@') || !str_starts_with($value, 'eyJpdiI6')) {
+            return $value;
+        }
+
+        try {
+            $email = Crypt::decryptString($value);
+
+            return str_contains($email, '@') ? $email : null;
+        } catch (DecryptException) {
+            return null;
+        }
+    }
+
+    public function getWhatsappAttribute(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (str_starts_with($value, 'eyJpdiI6')) {
+            try {
+                $value = Crypt::decryptString($value);
+            } catch (DecryptException) {
+                return null;
+            }
+        }
+
+        $number = trim($value);
+
+        return preg_match('/^\+?[0-9 ().-]+$/D', $number) && preg_match('/[0-9]/', $number)
+            ? $number
+            : null;
+    }
 
     // public function setWishlistAttribute($value)
     // {
@@ -51,7 +116,7 @@ class Participant extends Model
         $value = parent::getAttribute($key);
 
         // Aplica fallback apenas em campos criptografados
-        if (in_array($key, ['name', 'email', 'whatsapp', 'wishlist']) && !empty($value)) {
+        if (in_array($key, ['name', 'wishlist']) && !empty($value)) {
             // Detecta se o valor "parece" criptografado (base64 + prefixo esperado)
             $isEncrypted = is_string($value) && str_starts_with($value, 'eyJpdiI6');
 
@@ -87,6 +152,18 @@ class Participant extends Model
     public function givenAssignments()
     {
         return $this->hasMany(Assignment::class, 'giver_id');
+    }
+
+    public function activeAssignments()
+    {
+        return $this->givenAssignments()->whereHas(
+            'draw', fn ($query) => $query->active()->where('group_id', $this->group_id)
+        );
+    }
+
+    public function inviteScope(): string
+    {
+        return hash_hmac('sha256', $this->pwa_access_hash, config('app.key'));
     }
 
     public function receivedAssignments()
