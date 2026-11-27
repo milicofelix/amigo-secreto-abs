@@ -119,6 +119,8 @@
                     @csrf
                     <button class="hover:underline">Sair</button>
                 </form>
+                @elseif (request()->attributes->has('pwa.participant'))
+                    <x-amigo-secreto-participant-nav />
                 @else
                     <a href="{{ route('pwa.participant', absolute: false) }}" class="hover:underline">Meu Amigo Secreto</a>
                     @unless(request()->routeIs('login'))

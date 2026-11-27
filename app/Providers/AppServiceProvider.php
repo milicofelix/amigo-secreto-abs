@@ -6,7 +6,10 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\AmigoSecreto\Group;
 use App\Models\User;
 use App\Policies\AmigoSecreto\GroupPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use View;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-organizer', fn (User $user): bool => (bool) $user->is_organizer);
         Gate::define('access-super-admin', fn (User $user): bool => $user->is_organizer && $user->is_super_admin);
         Gate::policy(Group::class, GroupPolicy::class);
+
+        RateLimiter::for('participant-code', fn (Request $request) => Limit::perMinute(8)->by($request->ip()));
+        RateLimiter::for('participant-recovery', fn (Request $request) => Limit::perMinutes(10, 4)->by($request->ip()));
 
         // total de visitantes únicos registrados
         // só executa se a tabela existir

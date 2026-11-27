@@ -24,11 +24,16 @@ class Participant extends Model
 
     protected $casts = [
         'invite_expires_at' => 'datetime',
+        'invite_code' => 'encrypted',
+        'invite_recovery_expires_at' => 'datetime',
         'first_revealed_at' => 'datetime',
         'draw_email_enabled' => 'boolean',
     ];
 
-    protected $hidden = ['pwa_access_hash', 'secret_key', 'email', 'whatsapp', 'photo', 'wishlist'];
+    protected $hidden = [
+        'pwa_access_hash', 'invite_code', 'invite_recovery_hash', 'invite_recovery_expires_at',
+        'email_lookup_hash', 'secret_key', 'email', 'whatsapp', 'photo', 'wishlist',
+    ];
 
     public function hasActiveInvite(): bool
     {
@@ -48,7 +53,20 @@ class Participant extends Model
 
     public function setEmailAttribute($value)
     {
-        $this->attributes['email'] = !empty($value) ? Crypt::encryptString($value) : null;
+        $this->attributes['email'] = filled($value) ? Crypt::encryptString($value) : null;
+        $lookupHash = filled($value) ? self::emailLookupHash($value) : null;
+
+        if ($lookupHash !== ($this->attributes['email_lookup_hash'] ?? null)) {
+            $this->attributes['invite_recovery_hash'] = null;
+            $this->attributes['invite_recovery_expires_at'] = null;
+        }
+
+        $this->attributes['email_lookup_hash'] = $lookupHash;
+    }
+
+    public static function emailLookupHash(string $email): string
+    {
+        return hash_hmac('sha256', mb_strtolower(trim($email)), config('app.key'));
     }
 
     public function getEmailAttribute(?string $value): ?string

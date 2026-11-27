@@ -12,7 +12,7 @@
 
         const input = document.getElementById('participant-code');
         const code = fragment.get('convite');
-        if (input && /^[A-Za-z0-9]{24}$/.test(code)) {
+        if (input && /^(?:[A-Za-z0-9]{24}|[A-Za-z0-9]{48})$/.test(code)) {
             input.value = code;
         }
         return true;

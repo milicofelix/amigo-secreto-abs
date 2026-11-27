@@ -13,7 +13,14 @@
     @stack('head')
 </head>
 <body>
-    <header><a href="{{ route('home', absolute: false) }}">Amigo Secreto ABS</a></header>
+    <header>
+        <a href="{{ route('home', absolute: false) }}">Amigo Secreto ABS</a>
+        @if (request()->attributes->has('pwa.participant'))
+            <nav aria-label="Navegação do participante"><x-amigo-secreto-participant-nav /></nav>
+        @elseif (request()->routeIs('pwa.participant') && !request()->user())
+            <a href="{{ route('login', absolute: false) }}">Entrar como organizador</a>
+        @endif
+    </header>
     <main>
         @yield('content')
     </main>

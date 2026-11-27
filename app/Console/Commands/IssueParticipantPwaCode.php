@@ -24,7 +24,7 @@ class IssueParticipantPwaCode extends Command
         }
 
         $this->line($code);
-        $this->info('Entregue este código em particular ao participante. Ele é exibido apenas agora e vale por 30 dias.');
+        $this->info('Entregue este código em particular ao participante. Ele vale por 30 dias e fica disponível na tela de convite do organizador.');
 
         return self::SUCCESS;
     }

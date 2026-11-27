@@ -40,12 +40,17 @@ class AmigoSecretoInvitationTest extends TestCase
         $this->delete($revoke)->assertForbidden();
 
         $this->actingAs($owner);
-        $issued = $this->post($issue)->assertOk()->assertHeader('Referrer-Policy', 'no-referrer')
+        $qrPage = route('participants.qr', [$group, $giver]);
+        $this->post($issue)->assertRedirect($qrPage);
+        $issued = $this->get($qrPage)->assertOk()->assertHeader('Referrer-Policy', 'no-referrer')
             ->assertSee('data:image/png;base64,', false)->assertDontSee('LEGADO');
         $code = $issued->viewData('code');
         $this->assertSame($portal.'#convite='.$code, $issued->viewData('url'));
         $this->assertSame(hash('sha256', $code), $giver->fresh()->pwa_access_hash);
-        $this->get(route('participants.qr', [$group, $giver]))->assertOk()->assertDontSee($code);
+        $this->assertNotSame($code, $giver->fresh()->getRawOriginal('invite_code'));
+        $this->get($qrPage)->assertOk()->assertSee($code);
+        $this->actingAs(User::factory()->organizer()->create())->get($qrPage)->assertForbidden()->assertDontSee($code);
+        $this->actingAs($owner);
 
         $this->get(route('reveal.by.key', 'LEGADO'))->assertRedirect($portal);
         $this->get($portal)->assertDontSee('Destinatário esperado');

@@ -6,12 +6,12 @@ Priorizar login, isolamento dos grupos e privacidade do sorteio. O organizador v
 
 | Ação | Organizador | Super Admin | Participante |
 | --- | --- | --- | --- |
-| Listar e consultar grupos | Somente os que criou | Todos os grupos e anos | Grupo do próprio convite, pelo portal |
+| Listar e consultar grupos | Somente os que criou | Todos os grupos e anos | Dashboard, participantes e andamento do próprio grupo |
 | Criar grupo | Sim, vinculado à própria conta | Sim, vinculado à própria conta | — |
 | Alterar grupo, participantes e restrições | Somente nos grupos que criou e conforme o estado do sorteio | Nos grupos que criou. A gestão de grupos alheios exige uma permissão explícita em fase futura | Atualizar os próprios dados permitidos no portal |
 | Importar participantes | Entre grupos que criou, antes do sorteio | Entre grupos que criou, antes do sorteio | — |
 | Realizar sorteio | Somente nos grupos que criou | Somente nos grupos que criou | — |
-| Consultar pares | Revelação coletiva na data e hora definidas, nos grupos que criou | A visão global mostra o andamento. Acesso a pares de terceiros exige uma regra explícita | Somente o próprio resultado após o sorteio |
+| Consultar pares | Revelação coletiva na data e hora definidas, nos grupos que criou | A visão global mostra o andamento. Acesso a pares de terceiros exige uma regra explícita | Próprio resultado após o sorteio e pares do grupo após a revelação coletiva |
 
 ## Fase 1 Login e isolamento dos grupos
 
@@ -70,15 +70,18 @@ Commit sugerido — `git c "feat: adiciona painel global do super admin"`
 - [x] Restringir contatos, fotos, listas de desejos e registros de acesso às telas e aos papéis que precisam desses dados.
 - [x] Usar avisos genéricos por e-mail e push, com link para o portal. Preservar as preferências de notificações do participante.
 
-Em **Grupos → Editar → Participantes → Convite**, o criador pode gerar, substituir ou revogar um convite. O link, o QR e o código são exibidos na emissão e valem por 30 dias. Entregue-os diretamente ao participante. Substituir ou revogar invalida as sessões vinculadas ao código anterior.
+Em **Grupos → Editar → Participantes → Convite**, o criador pode gerar, consultar, substituir ou revogar um convite. O link, o QR e o código dos convites novos ficam disponíveis nessa tela durante a validade de 30 dias. Entregue-os diretamente ao participante. Substituir ou revogar invalida as sessões vinculadas ao código anterior.
+
+Em **Meu Amigo Secreto → Perdi meu convite**, o participante pode recuperar pelo e-mail que o organizador cadastrou. O link de recuperação vale 15 minutos e pode ser usado uma vez. O convite vencido pode ser renovado por esse fluxo, desde que ainda não tenha sido revogado. Para reenviar o código de um convite antigo que só guardava o hash, gere um novo pelo painel. A entrega do e-mail usa o transporte e a fila configurados na instalação.
 
 QRs do fluxo antigo passam a orientar a solicitar um novo convite. Códigos privados do PWA já emitidos ganham 30 dias de validade a partir da migração. O participante pode escolher se recebe avisos por e-mail. As inscrições de push ficam associadas à preferência por dispositivo.
 
 ### Teste manual no navegador
 
 1. Como organizador, gere um convite em **Grupos → Editar → Participantes → Convite**. Em uma janela anônima, abra o link ou escaneie o QR, toque em **Entrar** e confira o nome do participante. Antes do sorteio, o portal deve mostrar o estado de espera. Após o sorteio, ele deve mostrar somente o par dessa pessoa e a sugestão de presente, quando cadastrada.
-2. Clique em **Revogar convite** na sessão do organizador. Recarregue o portal na janela anônima e tente reutilizar o link. O resultado deve ficar indisponível e o portal deve orientar a solicitar um novo convite.
-3. Em um grupo de teste com e-mail e push configurados, desative os avisos por e-mail de um participante, mantenha os de outro e realize o sorteio. Confira a preferência e verifique se os avisos entregues apontam para **Meu Amigo Secreto** com texto genérico.
+2. Reabra **Convite** como organizador e confira o mesmo link. Em outra sessão, use **Perdi meu convite** com o e-mail cadastrado e confirme o acesso pelo link recebido. Navegue entre o dashboard, o sorteio e o portal individual. As ações de gestão ficam com o organizador, e os pares completos só aparecem após o horário de revelação.
+3. Clique em **Revogar convite** na sessão do organizador. Recarregue o portal na janela anônima e tente reutilizar o link. O resultado deve ficar indisponível e o portal deve orientar a solicitar um novo convite.
+4. Em um grupo de teste com e-mail e push configurados, desative os avisos por e-mail de um participante, mantenha os de outro e realize o sorteio. Confira a preferência e verifique se os avisos entregues apontam para **Meu Amigo Secreto** com texto genérico.
 
 Commit sugerido — `git c "feat: unifica a revelação com convites privados"`
 

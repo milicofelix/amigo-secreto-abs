@@ -86,12 +86,10 @@
                                     <div class="reveal-box">
                                         <div class="reveal-badge">🔓 Já revelou!</div>
                                         <span class="reveal-date">{{ $revealedAt->format('d/m/Y H:i') }}</span>
-                                        {{-- <a href="{{ route('reveal.form', $a->giver) }}" class="reveal-btn">🔁 Rever</a> --}}
-                                        <button onclick="window.location='{{ route('participants.qr', ['group' => $group->id, 'participant' => $a->giver->id]) }}'"
-                                            class="qr-btn"
-                                            title="Gerenciar convite">
-                                            📱
-                                        </button>
+                                        @can('manage', $group)
+                                            <a href="{{ route('participants.qr', [$group, $a->giver]) }}"
+                                               class="qr-btn">Convite</a>
+                                        @endcan
                                     </div>
                                     <label class="flex items-center gap-2 text-lg font-bold text-indigo-700">
                                         <input type="checkbox" class="w-5 h-5" disabled @checked($a->giver->shared_gift_idea) />
@@ -104,14 +102,11 @@
                                     </label>
 
                                 @else
-                                    {{-- <a href="{{ route('reveal.form', $a->giver) }}" class="btn-reveal-primary">
-                                        🔐 Revelar meu amigo
-                                    </a> --}}
-                                    <button onclick="window.location='{{ route('participants.qr', ['group' => $group->id, 'participant' => $a->giver->id]) }}'"
-                                            class="qr-btn"
-                                            title="Gerenciar convite">
-                                            📱 Gerenciar convite
-                                    </button>
+                                    <p class="text-gray-600">Ainda não consultou o resultado</p>
+                                    @can('manage', $group)
+                                        <a href="{{ route('participants.qr', [$group, $a->giver]) }}"
+                                           class="qr-btn">Gerenciar convite</a>
+                                    @endcan
                                 @endif
                             </div>
                         </div>
@@ -131,23 +126,29 @@
                     <p class="text-gray-600 text-lg">
                         Nenhum sorteio foi realizado neste grupo.
                     </p>
+                    @can('manage', $group)
                     <a href="{{ route('groups.edit', $group) }}"
                        class="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700">
                         Gerenciar grupo e realizar sorteio
                     </a>
+                    @endcan
                 </div>
 
             @endif
 
             {{-- Voltar --}}
             <div class="mt-8 text-center">
-                @if ($draw)
-                    <a href="{{ route('pwa.participant') }}" class="mr-3 font-semibold text-indigo-700 underline">Atualizar meu presente</a>
-                @endif
-                <a href="{{ route('groups.index', ['year' => $group->eventYear()], absolute: false) }}"
-                class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition w-full md:w-auto">
-                    ← Voltar aos Grupos
-                </a>
+                @can('manage', $group)
+                    <a href="{{ route('groups.index', ['year' => $group->eventYear()], absolute: false) }}"
+                       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold">
+                        ← Voltar aos Grupos
+                    </a>
+                @else
+                    <a href="{{ route('amigo.dashboard', $group, absolute: false) }}"
+                       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold">
+                        ← Voltar ao dashboard
+                    </a>
+                @endcan
             </div>
 
         </div>

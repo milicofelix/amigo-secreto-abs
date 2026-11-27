@@ -13,5 +13,5 @@
             Verificar acesso novamente
         </a>
     </div>
-    <script src="{{ asset('pwa-participant.js') }}?v=5" defer></script>
+    <script src="{{ asset('pwa-participant.js') }}?v=6" defer></script>
 @endif

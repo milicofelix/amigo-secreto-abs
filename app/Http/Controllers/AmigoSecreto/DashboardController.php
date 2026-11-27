@@ -14,7 +14,8 @@ class DashboardController extends Controller
         $currentGroup = $group;
 
         // === Cálculos do dashboard ===
-        $participants = Participant::where('group_id', $currentGroup->id)->count();
+        $members = $currentGroup->participants()->orderBy('name')->get(['id', 'name']);
+        $participants = $members->count();
 
         $reveals = $currentGroup->participants()->whereNotNull('first_revealed_at');
         $revealed = (clone $reveals)->count();
@@ -42,6 +43,7 @@ class DashboardController extends Controller
         return view('amigo-secreto.dashboard.index', [
             'group' => $currentGroup,
             'participants' => $participants,
+            'members' => $members,
             'revealed' => $revealed,
             'notRevealed' => $notRevealed,
             'percent' => $percent,

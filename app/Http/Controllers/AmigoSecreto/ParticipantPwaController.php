@@ -5,6 +5,7 @@ namespace App\Http\Controllers\AmigoSecreto;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendDrawWebPush;
 use App\Models\AmigoSecreto\Participant;
+use App\Services\ParticipantInvitation;
 use App\Models\AmigoSecreto\ParticipantPushSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,24 +33,20 @@ class ParticipantPwaController extends Controller
         return view('amigo-secreto.pwa.participant', compact('participant', 'assignment'));
     }
 
-    public function verify(Request $request)
+    public function verify(Request $request, ParticipantInvitation $invitations)
     {
         $data = $request->validate(
-            ['code' => ['required', 'string', 'size:24']],
-            ['code.required' => 'Informe seu código privado.', 'code.size' => 'Código privado inválido.'],
+            ['code' => ['required', 'string', 'regex:/\A(?:.{24}|[A-Za-z0-9]{48})\z/']],
+            ['code.required' => 'Informe seu código privado.', 'code.regex' => 'Código privado inválido.'],
         );
-        $hash = hash('sha256', $data['code']);
-        $participant = Participant::withActiveInvite()->where('pwa_access_hash', $hash)->first();
+        $participant = $invitations->redeem($data['code']);
 
         if (!$participant) {
-            throw ValidationException::withMessages(['code' => 'Convite inválido, revogado ou vencido. Peça um novo ao organizador.']);
+            throw ValidationException::withMessages(['code' => 'Este acesso é inválido, revogado ou vencido. Recupere por e-mail ou peça um novo convite ao organizador.']);
         }
 
-        Participant::withActiveInvite()->whereKey($participant->id)->where('pwa_access_hash', $hash)
-            ->update(['last_access_at' => now()]);
-
         $request->session()->regenerate(true);
-        $request->session()->put('pwa_participant', ['id' => $participant->id, 'hash' => $hash]);
+        $request->session()->put('pwa_participant', ['id' => $participant->id, 'hash' => $participant->pwa_access_hash]);
 
         return redirect()->route('pwa.participant');
     }
